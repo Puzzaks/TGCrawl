@@ -1,0 +1,36 @@
+name: tgcrawl
+description: "Project for Indexing of Telegram Channel Connections"
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 0.0.1+1
+
+environment:
+  sdk: '>=2.19.3 <3.0.0'
+
+
+dependencies:
+  http: ^1.1.2
+  xml: ^6.5.0
+  intl: ^0.17.0
+  url_launcher: ^6.1.10
+  shared_preferences: ^2.0.12
+  material_design_icons_flutter: 7.0.7296
+  dynamic_color: ^1.6.9
+  device_info_plus: ^10.1.1
+  path_provider: 2.0.9
+  tdlib: ^1.6.0
+  collection: ^1.0.0
+  ffi: ^2.0.0
+  meta: ^1.0.0
+  rxdart: '>=0.26.0 <1.0.0'
+  permission_handler: ^11.3.1
+  file_picker: ^8.1.2
+  provider: ^6.0.5
+
+
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
