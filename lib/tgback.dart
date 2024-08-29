@@ -101,7 +101,7 @@ class tgProvider with ChangeNotifier {
               case "authorizationStateWaitTdlibParameters":
                 status = "Connecting... (${updates.length})";
                 tdSend(_clientId, tdApi.SetTdlibParameters(
-                  systemVersion: 'Android ${androidInfo.version.baseOS}',
+                  systemVersion: '${androidInfo.version.baseOS} ${androidInfo.version.release}',
                   useTestDc: false,
                   useSecretChats: false,
                   useMessageDatabase: true,
@@ -125,7 +125,6 @@ class tgProvider with ChangeNotifier {
                 isWaitingNumber = false;
                 doReadUpdates = false;
                 isLoggedIn = true;
-                doReadUpdates = false;
                 notifyListeners();
                 break;
             }
@@ -136,7 +135,7 @@ class tgProvider with ChangeNotifier {
       }
     });
     tdSend(_clientId, tdApi.SetTdlibParameters(
-      systemVersion: 'Android ${androidInfo.version.baseOS}',
+      systemVersion: '${androidInfo.version.baseOS} ${androidInfo.version.release}',
       useTestDc: false,
       useSecretChats: false,
       useMessageDatabase: true,

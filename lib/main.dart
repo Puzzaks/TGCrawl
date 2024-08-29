@@ -97,7 +97,6 @@ class HomeScreen extends StatelessWidget {
                                             scrollPadding: const EdgeInsets.all(0),
                                             expands: false,
                                             minLines: null,
-                                            maxLines: null,
                                             decoration: InputDecoration(
                                               contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
                                               prefixIcon: Icon(Icons.password_rounded),
