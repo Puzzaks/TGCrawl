@@ -61,66 +61,206 @@ class HomeScreen extends StatelessWidget {
                 builder: (context, constraints) {
                   double scaffoldHeight = constraints.maxHeight;
                   double scaffoldWidth = constraints.maxWidth;
-                 return SafeArea(child: SingleChildScrollView(
-                   child: Column(
+                 return SafeArea(
+                     child: Column(
                      mainAxisAlignment: MainAxisAlignment.center,
                      children: [
-                       provider.isAppReady?Container(
-                   width: scaffoldWidth,
-                     child: Card(
-                       elevation: 5,
-                       child: Padding(
-                         padding: EdgeInsets.all(15),
-                         child: Column(
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             Text(
-                               provider.status,
-                               style: TextStyle(
-                                   fontWeight: FontWeight.bold
-                               ),
-                             ),
-                             Text("${provider.updates.isEmpty?"":provider.updates[0]["@type"]}"),
-                             Padding(
-                               padding: const EdgeInsets.only(top:15),
-                               child: TextField(
-                                 controller: provider.botkey,
-                                 autofocus: true,
-                                 keyboardType: TextInputType.text,
-                                 textAlignVertical: TextAlignVertical.top,
-                                 scrollPadding: const EdgeInsets.all(0),
-                                 expands: false,
-                                 minLines: null,
-                                 maxLines: null,
-                                 decoration: InputDecoration(
-                                   contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
-                                   prefixIcon: const Icon(Icons.lock_person_rounded),
-                                   labelText: 'Enter Bot Key',
-                                   border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
-                                 ),
-                               ),
-                             ),
-                             Row(
-                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                               children: [
-                                 Container(),
-                                 ElevatedButton(
-                                   onPressed: provider.isLoginReady?provider.isPassLoginReady?(){
-                                     provider.doPwdLogin();
-                                   }:(){
-                                     provider.doCodeLogin();
-                                   }:null,
-                                   child: Text(
-                                     "Send"
-                                   ),
-                                 )
-                               ],
-                             )
-                           ],
-                         ),
-                       ),
-                     ),
-                   ):Container(
+                        Builder(
+                          builder: (context) {
+                            if(provider.isWaitingPassword){
+                              return Container(
+                                width: scaffoldWidth,
+                                child: Card(
+                                  elevation: 5,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Please enter your password:",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top:15),
+                                          child: TextField(
+                                            controller: provider.password,
+                                            autofocus: true,
+                                            keyboardType: TextInputType.visiblePassword,
+                                            obscureText: true,
+                                            textAlignVertical: TextAlignVertical.top,
+                                            scrollPadding: const EdgeInsets.all(0),
+                                            expands: false,
+                                            minLines: null,
+                                            maxLines: null,
+                                            decoration: InputDecoration(
+                                              contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                                              prefixIcon: Icon(Icons.password_rounded),
+                                              labelText: 'Enter password',
+                                              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(),
+                                              ElevatedButton(
+                                                onPressed: (){
+                                                  provider.doPwdLogin();
+                                                },
+                                                child: Text(
+                                                    "Send"
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            if(provider.isWaitingCode){
+                              return Container(
+                                width: scaffoldWidth,
+                                child: Card(
+                                  elevation: 5,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Please enter your phone number:",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top:15),
+                                          child: TextField(
+                                            controller: provider.code,
+                                            autofocus: true,
+                                            keyboardType: TextInputType.number,
+                                            textAlignVertical: TextAlignVertical.top,
+                                            scrollPadding: const EdgeInsets.all(0),
+                                            expands: false,
+                                            minLines: null,
+                                            maxLines: null,
+                                            decoration: InputDecoration(
+                                              contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                                              prefixIcon: Icon(Icons.pin_rounded),
+                                              labelText: 'Enter Code',
+                                              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(),
+                                              ElevatedButton(
+                                                onPressed: (){
+                                                  provider.doCodeLogin();
+                                                },
+                                                child: Text(
+                                                    "Send"
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            if(provider.isWaitingNumber){
+                              return Container(
+                                width: scaffoldWidth,
+                                child: Card(
+                                  elevation: 5,
+                                  child: Padding(
+                                    padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Please enter your phone number:",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top:15),
+                                          child: TextField(
+                                            controller: provider.number,
+                                            autofocus: true,
+                                            keyboardType: TextInputType.phone,
+                                            textAlignVertical: TextAlignVertical.top,
+                                            scrollPadding: const EdgeInsets.all(0),
+                                            expands: false,
+                                            minLines: null,
+                                            maxLines: null,
+                                            decoration: InputDecoration(
+                                              contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                                              prefixIcon: Icon(Icons.dialpad_rounded),
+                                              labelText: 'Enter number',
+                                              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(),
+                                              ElevatedButton(
+                                                onPressed: (){
+                                                  provider.doNumberLogin();
+                                                },
+                                                child: Text(
+                                                    "Send"
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            return Container(
+                              height: scaffoldHeight,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                    children: provider.updates.map((update) {
+                                      return Card(
+                                        elevation: 5,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Text(update.toString()),
+                                        ),
+                                      );
+                                    }).toList()
+                                ),
+                              ),
+                            );
+                          }
+                        ),
+                       Container(
                          width: scaffoldWidth,
                          child: Card(
                            elevation: 5,
@@ -136,36 +276,62 @@ class HomeScreen extends StatelessWidget {
                                    ),
                                  ),
                                  Text("${provider.updates.isEmpty?"":provider.updates[0]["@type"]}"),
-                                 LinearProgressIndicator(
-                                   value: provider.isLoginReady?1:provider.updates.length==null?0:provider.updates.length / 51,
-                                   backgroundColor: Colors.transparent,
-                                   borderRadius: const BorderRadius.all(Radius.circular(3)),
-                                   color: Theme.of(context).colorScheme.primary,
+                                 Padding(
+                                   padding: const EdgeInsets.only(top:15),
+                                   child: TextField(
+                                     controller: provider.password,
+                                     autofocus: true,
+                                     keyboardType: TextInputType.text,
+                                     textAlignVertical: TextAlignVertical.top,
+                                     scrollPadding: const EdgeInsets.all(0),
+                                     expands: false,
+                                     minLines: null,
+                                     maxLines: null,
+                                     decoration: InputDecoration(
+                                       contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                                       prefixIcon: const Icon(Icons.lock_person_rounded),
+                                       labelText: 'Enter Bot Key',
+                                       border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                                     ),
+                                   ),
+                                 ),
+                                 Row(
+                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                   children: [
+                                     ElevatedButton(
+                                       onPressed: (){
+                                         provider.doPwdLogin();
+                                       },
+                                       child: Text(
+                                           "Password"
+                                       ),
+                                     ),
+                                     ElevatedButton(
+                                       onPressed: (){
+                                         provider.doReadUpdates = !provider.doReadUpdates;
+                                       },
+                                       child: Text(
+                                           "loader?"
+                                       ),
+                                     ),
+                                     ElevatedButton(
+                                       onPressed: (){
+                                         provider.doCodeLogin();
+                                       },
+                                       child: Text(
+                                           "Code"
+                                       ),
+                                     )
+                                   ],
                                  )
                                ],
                              ),
                            ),
                          ),
                        ),
-                       Container(
-                         height: scaffoldHeight,
-                         child: SingleChildScrollView(
-                           child: Column(
-                             children: provider.updates.map((update) {
-                               return Card(
-                                 elevation: 5,
-                                 child: Padding(
-                                   padding: EdgeInsets.all(15),
-                                   child: Text(update.toString()),
-                                 ),
-                               );
-                             }).toList()
-                           ),
-                         ),
-                       )
                      ]
-                   ),
-                 ));
+                 )
+                 );
                 },
               ),
             );

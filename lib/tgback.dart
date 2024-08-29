@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:async/async.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
@@ -10,10 +11,13 @@ import 'package:tdlib/td_api.dart' as tdApi;
 import 'package:tdlib/tdlib.dart';
 
 class tgProvider with ChangeNotifier {
-  TextEditingController botkey = TextEditingController();
-  bool isAppReady = false;
-  bool isLoginReady = false;
-  bool isPassLoginReady = false;
+  TextEditingController number = TextEditingController();
+  TextEditingController code = TextEditingController();
+  TextEditingController password = TextEditingController();
+  bool isLoggedIn = false;
+  bool isWaitingPassword = false;
+  bool isWaitingCode = false;
+  bool isWaitingNumber = false;
   List updates = [];
   int _clientId = 0;
   Map lastUpdate = {};
@@ -55,46 +59,28 @@ class tgProvider with ChangeNotifier {
   Future<void> launch () async {
     final directory = await getApplicationDocumentsDirectory();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
     await TdPlugin.initialize(tdlibPath);
     _clientId = tdCreate();
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((update) {
       if(!(update == null)){
         switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
-          case "authorizationStateWaitPassword":
-            isPassLoginReady = true;
-            isLoginReady = true;
-            status = "Waiting for password";
-            break;
-          case "ok":
-            isLoginReady = true;
-            status = "Authenticated! (${updates.length})";
-        // doReadUpdates = false;
-        // readChannel(1001474478067);
-        break;
           case "updateAuthorizationState":
             switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
+              case "authorizationStateWaitPassword":
+                isWaitingPassword = true;
+                status = "Waiting for password";
+                break;
               case "authorizationStateWaitPhoneNumber":
-                isAppReady = true;
-                // tdSend(_clientId, tdApi.CheckAuthenticationBotToken(token: '6808342978:AAH8iWAX6cntl6-RCZLEF4obO0hx0UYotEQ'));
-                tdSend(_clientId,tdApi.SetAuthenticationPhoneNumber(
-                    phoneNumber: "380993072873",
-                    settings: tdApi.PhoneNumberAuthenticationSettings(
-                        allowFlashCall: false,
-                        allowMissedCall: false,
-                        isCurrentPhoneNumber: true,
-                        allowSmsRetrieverApi: true,
-                        authenticationTokens: ["Test"]
-                    )
-                ));
-                status = "Ready to Authenticate! (${updates.length})";
-
-                doReadUpdates = true;
+                isWaitingNumber = true;
+                doReadUpdates = false;
                 updates.clear();
                 break;
               case "authorizationStateWaitTdlibParameters":
                 status = "Connecting... (${updates.length})";
                 tdSend(_clientId, tdApi.SetTdlibParameters(
-                  systemVersion: '',
+                  systemVersion: 'Android ${androidInfo.version.baseOS}',
                   useTestDc: false,
                   useSecretChats: false,
                   useMessageDatabase: true,
@@ -102,15 +88,24 @@ class tgProvider with ChangeNotifier {
                   useChatInfoDatabase: true,
                   filesDirectory: "${directory.path}/files",
                   databaseDirectory: "${directory.path}/DB",
-                  systemLanguageCode: 'en',
-                  deviceModel: 'unknown',
-                  applicationVersion: '1.0.0',
+                  systemLanguageCode: Platform.localeName.split("_")[0],
+                  deviceModel: "${androidInfo.brand} ${androidInfo.model}",
+                  applicationVersion: '0.69',
                   apiId: 3435077,
                   apiHash: "0369c1a073f7c720ca79508156201f3a",
                   databaseEncryptionKey: '0369c1a073f7c720ca79508156201f3a',
                   enableStorageOptimizer: false,
                   ignoreFileNames: false,
                 ));
+                break;
+              case"authorizationStateWaitCode":
+                isWaitingCode = true;
+                notifyListeners();
+                break;
+              case"authorizationStateReady":
+                isLoggedIn = true;
+                doReadUpdates = false;
+                notifyListeners();
                 break;
             }
             break;
@@ -120,7 +115,7 @@ class tgProvider with ChangeNotifier {
       }
     });
     tdSend(_clientId, tdApi.SetTdlibParameters(
-      systemVersion: '',
+      systemVersion: 'Android ${androidInfo.version}',
       useTestDc: false,
       useSecretChats: false,
       useMessageDatabase: true,
@@ -128,9 +123,9 @@ class tgProvider with ChangeNotifier {
       useChatInfoDatabase: true,
       filesDirectory: "${directory.path}/files",
       databaseDirectory: "${directory.path}/DB",
-      systemLanguageCode: 'en',
-      deviceModel: 'unknown',
-      applicationVersion: '1.0.0',
+      systemLanguageCode: Platform.localeName.split("_")[0],
+      deviceModel: "${androidInfo.brand} ${androidInfo.model}",
+      applicationVersion: '0.69',
       apiId: 3435077,
       apiHash: "0369c1a073f7c720ca79508156201f3a",
       databaseEncryptionKey: '0369c1a073f7c720ca79508156201f3a',
@@ -141,19 +136,29 @@ class tgProvider with ChangeNotifier {
     startTdReceiveUpdates();
   }
   doCodeLogin(){
-    status ="Attempting to authorize with code...";
-    notifyListeners();
     tdSend(_clientId, tdApi.CheckAuthenticationCode(
-        code: botkey.text
+        code: code.text
+    ));
+    doReadUpdates = true;
+    updates.clear();
+  }
+  doNumberLogin(){
+    tdSend(_clientId,tdApi.SetAuthenticationPhoneNumber(
+        phoneNumber: number.text,
+        settings: tdApi.PhoneNumberAuthenticationSettings(
+            allowFlashCall: false,
+            allowMissedCall: false,
+            isCurrentPhoneNumber: true,
+            allowSmsRetrieverApi: true,
+            authenticationTokens: ["Test"]
+        )
     ));
     doReadUpdates = true;
     updates.clear();
   }
   doPwdLogin(){
-    status ="Attempting to authorize with password...";
-    notifyListeners();
     tdSend(_clientId, tdApi.CheckAuthenticationPassword(
-        password: botkey.text
+        password: password.text
     ));
     doReadUpdates = true;
     updates.clear();
