@@ -63,10 +63,14 @@ class HomeScreen extends StatelessWidget {
                   double scaffoldWidth = constraints.maxWidth;
                  return SafeArea(
                      child: Column(
-                     mainAxisAlignment: MainAxisAlignment.center,
+                     mainAxisAlignment: MainAxisAlignment.start,
                      children: [
+                       Text(provider.status),
                         Builder(
                           builder: (context) {
+                            if(provider.isLoggedIn){
+                              return (Text("LOGGED IN MOTHERFUCKER"));
+                            }
                             if(provider.isWaitingPassword){
                               return Container(
                                 width: scaffoldWidth,
@@ -243,7 +247,7 @@ class HomeScreen extends StatelessWidget {
                               );
                             }
                             return Container(
-                              height: scaffoldHeight,
+                              height: scaffoldHeight - 42,
                               child: SingleChildScrollView(
                                 child: Column(
                                     children: provider.updates.map((update) {
@@ -260,75 +264,6 @@ class HomeScreen extends StatelessWidget {
                             );
                           }
                         ),
-                       Container(
-                         width: scaffoldWidth,
-                         child: Card(
-                           elevation: 5,
-                           child: Padding(
-                             padding: EdgeInsets.all(15),
-                             child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                 Text(
-                                   provider.status,
-                                   style: TextStyle(
-                                       fontWeight: FontWeight.bold
-                                   ),
-                                 ),
-                                 Text("${provider.updates.isEmpty?"":provider.updates[0]["@type"]}"),
-                                 Padding(
-                                   padding: const EdgeInsets.only(top:15),
-                                   child: TextField(
-                                     controller: provider.password,
-                                     autofocus: true,
-                                     keyboardType: TextInputType.text,
-                                     textAlignVertical: TextAlignVertical.top,
-                                     scrollPadding: const EdgeInsets.all(0),
-                                     expands: false,
-                                     minLines: null,
-                                     maxLines: null,
-                                     decoration: InputDecoration(
-                                       contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
-                                       prefixIcon: const Icon(Icons.lock_person_rounded),
-                                       labelText: 'Enter Bot Key',
-                                       border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
-                                     ),
-                                   ),
-                                 ),
-                                 Row(
-                                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                   children: [
-                                     ElevatedButton(
-                                       onPressed: (){
-                                         provider.doPwdLogin();
-                                       },
-                                       child: Text(
-                                           "Password"
-                                       ),
-                                     ),
-                                     ElevatedButton(
-                                       onPressed: (){
-                                         provider.doReadUpdates = !provider.doReadUpdates;
-                                       },
-                                       child: Text(
-                                           "loader?"
-                                       ),
-                                     ),
-                                     ElevatedButton(
-                                       onPressed: (){
-                                         provider.doCodeLogin();
-                                       },
-                                       child: Text(
-                                           "Code"
-                                       ),
-                                     )
-                                   ],
-                                 )
-                               ],
-                             ),
-                           ),
-                         ),
-                       ),
                      ]
                  )
                  );

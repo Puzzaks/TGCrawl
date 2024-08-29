@@ -67,15 +67,24 @@ class tgProvider with ChangeNotifier {
       if(!(update == null)){
         switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
           case "updateAuthorizationState":
+            status = update.toString();
             switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
               case "authorizationStateWaitPassword":
                 isWaitingPassword = true;
-                status = "Waiting for password";
+                isWaitingCode = false;
+                doReadUpdates = false;
+                notifyListeners();
                 break;
               case "authorizationStateWaitPhoneNumber":
                 isWaitingNumber = true;
                 doReadUpdates = false;
-                updates.clear();
+                notifyListeners();
+                break;
+              case "authorizationStateWaitCode":
+                isWaitingCode = true;
+                isWaitingNumber = false;
+                doReadUpdates = false;
+                notifyListeners();
                 break;
               case "authorizationStateWaitTdlibParameters":
                 status = "Connecting... (${updates.length})";
@@ -98,11 +107,11 @@ class tgProvider with ChangeNotifier {
                   ignoreFileNames: false,
                 ));
                 break;
-              case"authorizationStateWaitCode":
-                isWaitingCode = true;
-                notifyListeners();
-                break;
               case"authorizationStateReady":
+                isWaitingPassword = false;
+                isWaitingCode = false;
+                isWaitingNumber = false;
+                doReadUpdates = false;
                 isLoggedIn = true;
                 doReadUpdates = false;
                 notifyListeners();
@@ -115,7 +124,7 @@ class tgProvider with ChangeNotifier {
       }
     });
     tdSend(_clientId, tdApi.SetTdlibParameters(
-      systemVersion: 'Android ${androidInfo.version}',
+      systemVersion: 'Android ${androidInfo.version.baseOS}',
       useTestDc: false,
       useSecretChats: false,
       useMessageDatabase: true,
