@@ -29,10 +29,14 @@ class tgProvider with ChangeNotifier {
   StreamSubscription? _tdReceiveSubscription;
 
   void startTdReceiveUpdates() async {
-    while (doReadUpdates) {
-      var result = await tdReceive(1);
-      _tdReceiveSubject.add(result?.toJson().cast<dynamic, dynamic>());
-      await Future.delayed(Duration(milliseconds: 100));
+    while (true) {
+      if(doReadUpdates){
+        var result = await tdReceive(1);
+        _tdReceiveSubject.add(result?.toJson().cast<dynamic, dynamic>());
+        await Future.delayed(Duration(milliseconds: 100));
+      }else{
+        await Future.delayed(Duration(milliseconds: 100));
+      }
     }
   }
 
@@ -53,6 +57,9 @@ class tgProvider with ChangeNotifier {
     jsonString = jsonString.replaceAll('"[{', '[{');
     jsonString = jsonString.replaceAll('}]"', '}]');
 
+    /// fix very fucked bug that was hurting me
+    jsonString = jsonString.replaceAll('}}"}', '}}}');
+
     return jsonString;
   }
 
@@ -66,8 +73,13 @@ class tgProvider with ChangeNotifier {
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((update) {
       if(!(update == null)){
         switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
+          case "authorizationStateWaitCode":
+            isWaitingCode = true;
+            isWaitingNumber = false;
+            doReadUpdates = false;
+            notifyListeners();
+            break;
           case "updateAuthorizationState":
-            status = update.toString();
             switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
               case "authorizationStateWaitPassword":
                 isWaitingPassword = true;
@@ -98,7 +110,7 @@ class tgProvider with ChangeNotifier {
                   filesDirectory: "${directory.path}/files",
                   databaseDirectory: "${directory.path}/DB",
                   systemLanguageCode: Platform.localeName.split("_")[0],
-                  deviceModel: "${androidInfo.brand} ${androidInfo.model}",
+                  deviceModel: "${androidInfo.manufacturer} ${androidInfo.model}",
                   applicationVersion: '0.69',
                   apiId: 3435077,
                   apiHash: "0369c1a073f7c720ca79508156201f3a",
@@ -133,7 +145,7 @@ class tgProvider with ChangeNotifier {
       filesDirectory: "${directory.path}/files",
       databaseDirectory: "${directory.path}/DB",
       systemLanguageCode: Platform.localeName.split("_")[0],
-      deviceModel: "${androidInfo.brand} ${androidInfo.model}",
+      deviceModel: "${androidInfo.manufacturer} ${androidInfo.model}",
       applicationVersion: '0.69',
       apiId: 3435077,
       apiHash: "0369c1a073f7c720ca79508156201f3a",
@@ -141,17 +153,16 @@ class tgProvider with ChangeNotifier {
       enableStorageOptimizer: false,
       ignoreFileNames: false,
     ));
-
     startTdReceiveUpdates();
   }
   doCodeLogin(){
+    doReadUpdates = true;
     tdSend(_clientId, tdApi.CheckAuthenticationCode(
         code: code.text
     ));
-    doReadUpdates = true;
-    updates.clear();
   }
   doNumberLogin(){
+    doReadUpdates = true;
     tdSend(_clientId,tdApi.SetAuthenticationPhoneNumber(
         phoneNumber: number.text,
         settings: tdApi.PhoneNumberAuthenticationSettings(
@@ -162,25 +173,21 @@ class tgProvider with ChangeNotifier {
             authenticationTokens: ["Test"]
         )
     ));
-    doReadUpdates = true;
-    updates.clear();
   }
   doPwdLogin(){
+    doReadUpdates = true;
     tdSend(_clientId, tdApi.CheckAuthenticationPassword(
         password: password.text
     ));
-    doReadUpdates = true;
-    updates.clear();
   }
 
   readChannel(id){
+    doReadUpdates = true;
     status ="Attempting to read channel";
     notifyListeners();
     tdSend(_clientId, tdApi.GetMessages(
         chatId: id,
       messageIds: [0,1,2,3,4,5],
     ));
-    doReadUpdates = true;
-    updates.clear();
   }
 }

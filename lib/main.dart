@@ -65,7 +65,6 @@ class HomeScreen extends StatelessWidget {
                      child: Column(
                      mainAxisAlignment: MainAxisAlignment.start,
                      children: [
-                       Text(provider.status),
                         Builder(
                           builder: (context) {
                             if(provider.isLoggedIn){
@@ -141,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          "Please enter your phone number:",
+                                          "Please enter code from Telegram:",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold
                                           ),
