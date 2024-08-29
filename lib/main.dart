@@ -99,6 +99,22 @@ class HomeScreen extends StatelessWidget {
                                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
                                  ),
                                ),
+                             ),
+                             Row(
+                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                               children: [
+                                 Container(),
+                                 ElevatedButton(
+                                   onPressed: provider.isLoginReady?provider.isPassLoginReady?(){
+                                     provider.doPwdLogin();
+                                   }:(){
+                                     provider.doCodeLogin();
+                                   }:null,
+                                   child: Text(
+                                     "Send"
+                                   ),
+                                 )
+                               ],
                              )
                            ],
                          ),
@@ -131,6 +147,22 @@ class HomeScreen extends StatelessWidget {
                            ),
                          ),
                        ),
+                       Container(
+                         height: scaffoldHeight,
+                         child: SingleChildScrollView(
+                           child: Column(
+                             children: provider.updates.map((update) {
+                               return Card(
+                                 elevation: 5,
+                                 child: Padding(
+                                   padding: EdgeInsets.all(15),
+                                   child: Text(update.toString()),
+                                 ),
+                               );
+                             }).toList()
+                           ),
+                         ),
+                       )
                      ]
                    ),
                  ));
