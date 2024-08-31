@@ -34,3 +34,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/config/languages.json
+    - assets/config/ua.json
+    - assets/config/en.json

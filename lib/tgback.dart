@@ -43,7 +43,7 @@ class tgProvider with ChangeNotifier {
 
   getLanguages() async {
       final response = await http.get(
-          Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/config/languages.json"),
+          Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
       print(response.body);
   }
