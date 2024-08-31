@@ -6,9 +6,11 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tdlib/td_client.dart';
 import 'package:tdlib/td_api.dart' as tdApi;
 import 'package:tdlib/tdlib.dart';
+import 'package:http/http.dart' as http;
 
 class tgProvider with ChangeNotifier {
   TextEditingController number = TextEditingController();
@@ -27,7 +29,24 @@ class tgProvider with ChangeNotifier {
   RestartableTimer fetchTimer = RestartableTimer(Duration(seconds: 10), (){});
   final _tdReceiveSubject = BehaviorSubject();
   StreamSubscription? _tdReceiveSubscription;
+  bool isFirstBoot = true;
+  List languages = [];
+  Map dictionary = {};
 
+  void init() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    isFirstBoot = await prefs.getBool('first') ?? true;
+    notifyListeners();
+    getLanguages();
+  }
+
+
+  getLanguages() async {
+      final response = await http.get(
+          Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/config/languages.json"),
+      );
+      print(response.body);
+  }
   void startTdReceiveUpdates() async {
     while (true) {
       if(doReadUpdates){
