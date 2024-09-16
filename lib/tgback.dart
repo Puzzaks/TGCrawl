@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:async/async.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +33,9 @@ class tgProvider with ChangeNotifier {
   bool isFirstBoot = true;
   List languages = [];
   Map dictionary = {};
+  String locale = "en";
+  bool langReady = false;
+  double langState = 0.0;
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -42,11 +46,41 @@ class tgProvider with ChangeNotifier {
 
 
   getLanguages() async {
+    status = "Loading dictionaries...";
+    notifyListeners();
       final response = await http.get(
           Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
-      print(response.body);
+    status = "Downloading dictionaries...";
+    notifyListeners();
+      if(response.statusCode == 200){
+        langState = 1 / (languages.length + 1);
+        notifyListeners();
+        languages = jsonDecode(response.body);
+        for(int i=0; i < languages.length; i++){
+          status = "Downloading ${languages[i]["name"]}";
+          langState = (languages.length + 1) / (i+1);
+          notifyListeners();
+          final languageGet = await http.get(
+            Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
+          );
+          if(response.statusCode == 200){
+            dictionary[languages[i]["id"]] = jsonDecode(languageGet.body);
+          }
+        }
+      }else{
+        await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
+          languages = jsonDecode(langlist);
+          for(int i=0; i < languages.length; i++){
+            await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
+              dictionary[languages[i]["id"]] = jsonDecode(langentry);
+            });
+          }
+        });
+      }
+      langReady = true;
   }
+
   void startTdReceiveUpdates() async {
     while (true) {
       if(doReadUpdates){

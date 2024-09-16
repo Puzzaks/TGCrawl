@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
     WidgetsFlutterBinding.ensureInitialized();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<tgProvider>(context, listen: false).init();
+      print(Platform.localeName.split("_")[0] == "en");
     });
     return HomeScreen();
   }
@@ -315,8 +316,10 @@ class firstBootState extends State<firstBoot> {
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Text(
-                            "tst"
+                        Card(
+                          child: Text(
+                              "huh"
+                          ),
                         )
                       ]
                   ),

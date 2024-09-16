@@ -1,10 +1,12 @@
 [
   {
+    "origin": "English",
     "name": "English",
     "id": "en"
   },
   {
-    "name": "Українська",
+    "orinin": "Українська",
+    "name": "Ukrainian",
     "id": "ua"
   }
 ]
