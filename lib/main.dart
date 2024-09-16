@@ -5,6 +5,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tgcrawl/tgback.dart';
 
 void main() {
@@ -290,45 +291,414 @@ class firstBoot extends StatefulWidget {
 }
 
 class firstBootState extends State<firstBoot> {
+  Widget infoCard (double width, String title, String desc){
+    return Container(
+      width: width,
+      child: Card(
+        color: Theme.of(context).colorScheme.onPrimary,
+        elevation: 5,
+        child: Padding(padding: EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold
+                ),
+              ),
+              Text(
+                  desc,
+                  style: TextStyle(
+                      fontSize: 16
+                  )
+              ),
+            ],
+          ),),
+      ),
+    );
+  }
+
   static final _defaultLightColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.teal);
   static final _defaultDarkColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.teal, brightness: Brightness.dark);
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(builder: (lightColorScheme, darkColorScheme) {
-      return MaterialApp(
-        theme: ThemeData(
-          colorScheme: lightColorScheme ?? _defaultLightColorScheme,
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: darkColorScheme ?? _defaultDarkColorScheme,
-          useMaterial3: true,
-        ),
-        themeMode: ThemeMode.system,
-        debugShowCheckedModeBanner: false,
-        home: Consumer<tgProvider>(
-          builder: (context, provider, child) {
-            return Container(
-              height: 100,
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Card(
-                          child: Text(
-                              "huh"
-                          ),
-                        )
-                      ]
-                  ),
+    return Expanded(
+      child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            double scaffoldHeight = constraints.maxHeight;
+            double scaffoldWidth = constraints.maxWidth;
+            print(scaffoldHeight);
+            return DynamicColorBuilder(builder: (lightColorScheme, darkColorScheme) {
+              return MaterialApp(
+                theme: ThemeData(
+                  colorScheme: lightColorScheme ?? _defaultLightColorScheme,
+                  useMaterial3: true,
                 ),
-              ),
-            );
-          },
-        ),
-      );
-    });
+                darkTheme: ThemeData(
+                  colorScheme: darkColorScheme ?? _defaultDarkColorScheme,
+                  useMaterial3: true,
+                ),
+                themeMode: ThemeMode.system,
+                debugShowCheckedModeBanner: false,
+                home: Consumer<tgProvider>(
+                  builder: (context, provider, child) {
+                    return Container(
+                      height: scaffoldHeight,
+                      child: provider.langReady?Padding(
+                        padding: EdgeInsets.all(5),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              AnimatedCrossFade(
+                                duration: provider.switchIntro ? Duration(milliseconds: 500) : Duration.zero,
+                                firstChild: LinearProgressIndicator(
+                                  value: (provider.introPosition + 1) / (provider.introSequence.length - 1),
+                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                ),
+                                secondChild: LinearProgressIndicator(
+                                  value: (provider.introPosition + (provider.switchIntro?1:2)) / (provider.introSequence.length - 1),
+                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                ),
+                                crossFadeState: !provider.switchIntro? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                              ),
+                              provider.isOffline ? Padding(
+                                padding: EdgeInsets.only(top:5),
+                                child: Container(
+                                  width: scaffoldWidth,
+                                  child: Card(
+                                    color: Theme.of(context).colorScheme.errorContainer,
+                                    elevation: 5,
+                                    child: Padding(padding: EdgeInsets.all(15),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Container(
+                                              width: scaffoldWidth - 84,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    provider.dict("offline_title"),
+                                                    style: TextStyle(
+                                                        fontSize: 19,
+                                                        fontWeight: FontWeight.bold
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                      provider.dict("offline_desc"),
+                                                      style: TextStyle(
+                                                          fontSize: 16
+                                                      )
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.error_outline_rounded,
+                                              size: 36,
+                                            )
+                                          ],
+                                        )
+                                    ),
+                                  ),
+                                ),
+                              ): Container(),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AnimatedCrossFade(
+                                      duration: provider.switchIntro ? Duration(milliseconds: 500) : Duration.zero,
+                                      firstChild: Icon(
+                                        IconData(int.parse(provider.introPair[0]["icon"]), fontFamily: 'MaterialIcons'),
+                                        size: 200,
+                                      ),
+                                      secondChild: Icon(
+                                        IconData(int.parse(provider.introPair[1]["icon"]), fontFamily: 'MaterialIcons'),
+                                        size: 200,
+                                      ),
+                                      crossFadeState: !provider.switchIntro? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                                    ),
+                                  ]
+                                ),
+                              ),
+                              Column(
+                                children: [
+                                  AnimatedCrossFade(
+                                    duration: provider.switchIntro ? Duration(milliseconds: 500) : Duration.zero,
+                                    firstChild: provider.introSequence[provider.introPosition].containsKey("selector")
+                                        ?provider.introSequence[provider.introPosition]["selector"]["type"] == "language"
+                                          ? Container(
+                                            width: scaffoldWidth,
+                                            child: Card(
+                                              color: Theme.of(context).colorScheme.onPrimary,
+                                              elevation: 5,
+                                              child: Padding(padding: EdgeInsets.all(15),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      provider.dict(provider.introPair[0]["title"]),
+                                                      style: TextStyle(
+                                                          fontSize: 19,
+                                                          fontWeight: FontWeight.bold
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                        provider.dict(provider.introPair[0]["description"]),
+                                                        style: TextStyle(
+                                                            fontSize: 16
+                                                        )
+                                                    ),
+                                                    Padding(
+                                                      padding: EdgeInsets.only(top: 15),
+                                                      child: DropdownMenu(
+                                                        controller: provider.languageSelector,
+                                                        initialSelection: provider.locale,
+                                                        onSelected: (language) {
+                                                          provider.locale = language!;
+                                                          setState(() {
+
+                                                          });
+                                                        },
+                                                        enableSearch: true,
+                                                        width: scaffoldWidth - 48,
+                                                        label: Text(provider.dict("language_select")),
+                                                        leadingIcon: const Icon(Icons.language_rounded),
+                                                        dropdownMenuEntries: provider.languages.map((language) {
+                                                          return DropdownMenuEntry(
+                                                              value: language["id"],
+                                                              label: language["origin"],
+                                                          );
+                                                        }).toList(),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          : infoCard(scaffoldWidth, provider.dict(provider.introPair[0]["title"]), provider.dict(provider.introPair[0]["description"]),)
+                                        : infoCard(scaffoldWidth, provider.dict(provider.introPair[0]["title"]), provider.dict(provider.introPair[0]["description"]),),
+                                    secondChild: infoCard(scaffoldWidth, provider.dict(provider.introPair[1]["title"]), provider.dict(provider.introPair[1]["description"]),),
+                                    crossFadeState: !provider.switchIntro? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                                  ),
+                                  Container(
+                                    width: scaffoldWidth,
+                                    child: AnimatedCrossFade(
+                                      duration: Duration(milliseconds: 500),
+                                      firstChild: GestureDetector(
+                                        onTap: (){
+
+                                        },
+                                        child: Card(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          elevation: 5,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(15),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  provider.dict("done"),
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Icon(
+                                                    Icons.done_rounded
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      secondChild: provider.introSequence[provider.introPosition].containsKey("selector")
+                                        ? provider.introSequence[provider.introPosition]["selector"]["type"] == "bool"
+                                          ? Row(
+                                            children: [
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () async {
+                                                    final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                    prefs.setBool(provider.introSequence[provider.introPosition]["selector"]["name"], true);
+                                                    provider.progressIntroSequence();
+                                                  },
+                                                  child: Card(
+                                                    color: Theme.of(context).colorScheme.onPrimary,
+                                                    elevation: 5,
+                                                    child: Padding(
+                                                      padding: EdgeInsets.all(15),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            provider.dict(provider.introSequence[provider.introPosition]["selector"]["true"]),
+                                                            style: TextStyle(
+                                                                fontSize: 19,
+                                                                fontWeight: FontWeight.bold
+                                                            ),
+                                                          ),
+                                                          Icon(
+                                                              Icons.navigate_next_rounded
+                                                          )
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              ),
+                                              Expanded(
+                                                  child: GestureDetector(
+                                                    onTap: () async {
+                                                      final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                      prefs.setBool(provider.introSequence[provider.introPosition]["selector"]["name"], false);
+                                                      provider.progressIntroSequence();
+                                                    },
+                                                    child: Card(
+                                                      color: Theme.of(context).colorScheme.errorContainer,
+                                                      elevation: 5,
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(15),
+                                                        child: Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              provider.dict(provider.introSequence[provider.introPosition]["selector"]["false"]),
+                                                              style: TextStyle(
+                                                                  fontSize: 19,
+                                                                  fontWeight: FontWeight.bold
+                                                              ),
+                                                            ),
+                                                            Icon(
+                                                                Icons.navigate_next_rounded
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                              ),
+                                            ],
+                                          )
+                                          : GestureDetector(
+                                        onTap: () async {
+                                          provider.progressIntroSequence();
+                                        },
+                                        child: Card(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          elevation: 5,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(15),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  provider.dict("next"),
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Icon(
+                                                    Icons.navigate_next_rounded
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                        : GestureDetector(
+                                        onTap: (){
+                                          provider.progressIntroSequence();
+                                        },
+                                        child: Card(
+                                          color: Theme.of(context).colorScheme.onPrimary,
+                                          elevation: 5,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(15),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  provider.dict("next"),
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Icon(
+                                                    Icons.navigate_next_rounded
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      crossFadeState: provider.introPosition > (provider.introSequence.length - 3)? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                                    ),
+                                  ),
+                                ],
+                              )
+                              // infoCard(scaffoldWidth, provider.dict("welcome_title"), provider.dict("welcome_desc")),
+                              // infoCard(scaffoldWidth, provider.dict("desc_title"), provider.dict("desc_desc")),
+                              // infoCard(scaffoldWidth, provider.dict("reason_title"), provider.dict("reason_desc")),
+                              // infoCard(scaffoldWidth, provider.dict("safety_title"), provider.dict("safety_desc")),
+
+                            ]
+                        ),
+                      )
+                          : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 350,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 15,
+                                child: Padding(padding: EdgeInsets.all(15),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Loading...",
+                                      style: TextStyle(
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(bottom: 5),
+                                      child: Text(
+                                        provider.status,
+                                      ),
+                                    ),
+                                    LinearProgressIndicator(
+                                      value: provider.langState == 0.0 ? null : provider.langState,
+                                      borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                    )
+                                  ],
+                                ),),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            });
+          }
+      ),
+    );
   }
 }

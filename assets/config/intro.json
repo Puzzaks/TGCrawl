@@ -1,0 +1,46 @@
+[
+  {
+    "title":"welcome_title",
+    "description": "welcome_desc",
+    "icon": "0xf820",
+    "selector": {
+      "type": "language"
+    }
+  },
+  {
+    "title":"desc_title",
+    "description": "desc_desc",
+    "icon": "0xf815"
+  },
+  {
+    "title":"reason_title",
+    "description": "reason_desc",
+    "icon": "0xf7e4"
+  },
+  {
+    "title":"safety_title",
+    "description": "safety_desc",
+    "icon": "0xf013e"
+  },
+  {
+    "title":"crowdsource_title",
+    "description": "crowdsource_desc",
+    "icon": "0xf2bc",
+    "selector": {
+      "type": "bool",
+      "name": "crowdsource",
+      "true": "crowdsource_yes",
+      "false": "crowdsource_no"
+    }
+  },
+  {
+    "title": "done",
+    "description": "done_desc",
+    "icon": "0xf6d4"
+  },
+  {
+    "title": "done",
+    "description": "done_desc",
+    "icon": "0xf6d4"
+  }
+]

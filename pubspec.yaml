@@ -41,5 +41,6 @@ flutter:
 
   assets:
     - assets/config/languages.json
+    - assets/config/intro.json
     - assets/config/ua.json
     - assets/config/en.json

@@ -1,3 +1,20 @@
 {
-  "welcome": "Welcome to the Automated Telegram channel analyzer!"
+  "next": "Next",
+  "done":"Done",
+  "language_select": "Select your language",
+  "offline_title": "Offline!",
+  "offline_desc": "Unable to read remote configuration.",
+  "welcome_title": "TGCrawler",
+  "welcome_desc": "Welcome to the Automated Telegram channel analyzer! Let's set up the app. First, let's set up your language preferences.",
+  "desc_title": "What is this?",
+  "desc_desc": "This is an automatic Telegram channel crawler that analyzes how channels interact with each other based on reposts. It [soon will build] a visual map of the relationships between channels, showing how they're connected based on reposts.",
+  "reason_title": "Why use it?",
+  "reason_desc": "If you want to get to know your channel in a new way, this will help. You can map your channel and look not at current statistics, but at overall data about your channel and what does it have. Or you can check up on someone else :)",
+  "safety_title": "Is it safe?",
+  "safety_desc": "This application doesn't send any of your data anywhere. Your Telegram account is needed for the app to function, but it will NEVER leave your device. You can opt out from crowdsourcing the complete map of Telegram in the next step if you wish. This application is open-source, so you can check out the source code or build your own app using it!",
+  "crowdsource_title": "Share data?",
+  "crowdsource_desc": "You can allow the app to share found connections with the community. It will allow us to make global relations map that will be available to everyone. Should you choose to share, you will not see any ads in the app and you can choose to be added to our contributors. It is up to you.",
+  "crowdsource_yes": "Share",
+  "crowdsource_no": "Don't share",
+  "done_desc": "You've set your preferences. Enjoy your exploration journey and thanks for trying!"
 }

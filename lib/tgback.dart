@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:async/async.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,6 +15,7 @@ import 'package:tdlib/tdlib.dart';
 import 'package:http/http.dart' as http;
 
 class tgProvider with ChangeNotifier {
+  TextEditingController languageSelector = TextEditingController();
   TextEditingController number = TextEditingController();
   TextEditingController code = TextEditingController();
   TextEditingController password = TextEditingController();
@@ -36,49 +38,132 @@ class tgProvider with ChangeNotifier {
   String locale = "en";
   bool langReady = false;
   double langState = 0.0;
+  List introSequence = [];
+  List introPair = [];
+  int introPosition = 0;
+  bool switchIntro = false;
+  bool isOffline = false;
+
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     isFirstBoot = await prefs.getBool('first') ?? true;
     notifyListeners();
-    getLanguages();
+    if(kReleaseMode){
+      getConfigOnline();
+    }else{
+      getConfigOffline();
+    }
+    String deviceLocale = Platform.localeName.split("_")[0];
+    for(int a = 0; a < languages.length;a++){
+      if(languages[a]["id"] == deviceLocale){
+        locale = deviceLocale;
+      }
+    }
   }
 
 
-  getLanguages() async {
+  String dict (String entry){
+    if(!dictionary[locale].containsKey(entry)){
+      return "Not translated to $locale!";
+    }
+    return dictionary[locale][entry].toString();
+  }
+
+  progressIntroSequence() async {
+    introPosition = introPosition + 1;
+    switchIntro = true;
+    notifyListeners();
+    await Future.delayed(const Duration(milliseconds: 500));
+    switchIntro = false;
+    introPair.clear();
+    introPair.add(introSequence[introPosition]);
+    introPair.add(introSequence[introPosition + 1]);
+    notifyListeners();
+  }
+
+  getConfigOnline() async {
+    status = "Loading configuration...";
+    langState = 1 / (languages.length + 2);
+    notifyListeners();
+    final intros = await http.get(
+      Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/intro.json"),
+    );
+    if(intros.statusCode == 200){
+      notifyListeners();
+      introSequence = jsonDecode(intros.body);
+      introPair.add(introSequence[introPosition]);
+      introPair.add(introSequence[introPosition + 1]);
+    }else{
+      getConfigOffline();
+    }
     status = "Loading dictionaries...";
     notifyListeners();
       final response = await http.get(
-          Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
+        Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
-    status = "Downloading dictionaries...";
-    notifyListeners();
       if(response.statusCode == 200){
-        langState = 1 / (languages.length + 1);
+        langState = 2 / (languages.length + 2);
         notifyListeners();
         languages = jsonDecode(response.body);
         for(int i=0; i < languages.length; i++){
           status = "Downloading ${languages[i]["name"]}";
-          langState = (languages.length + 1) / (i+1);
+          langState = (languages.length + 2) / (i+2);
           notifyListeners();
           final languageGet = await http.get(
             Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
           );
           if(response.statusCode == 200){
             dictionary[languages[i]["id"]] = jsonDecode(languageGet.body);
+          }else{
+            getConfigOffline();
           }
         }
       }else{
-        await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
-          languages = jsonDecode(langlist);
-          for(int i=0; i < languages.length; i++){
-            await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
-              dictionary[languages[i]["id"]] = jsonDecode(langentry);
-            });
-          }
+        getConfigOffline();
+      }
+    status = "Dictionary loaded!";
+    langReady = true;
+    notifyListeners();
+  }
+  getConfigOffline() async {
+    isOffline = true;
+    status = "Loading configuration...";
+    langState = 1 / (languages.length + 2);
+    notifyListeners();
+    await rootBundle.loadString('assets/config/intro.json').then((introlist) async {
+      introSequence = jsonDecode(introlist);
+      introPair.add(introSequence[introPosition]);
+      introPair.add(introSequence[introPosition + 1]);
+      langState = 2 / (languages.length + 2);
+      notifyListeners();
+      for(int i=0; i < languages.length; i++){
+        await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
+          status = "Reading ${languages[i]["name"]}";
+          langState = (languages.length + 2) / (i+2);
+          notifyListeners();
+          dictionary[languages[i]["id"]] = jsonDecode(langentry);
         });
       }
-      langReady = true;
+    });
+    status = "Loading dictionaries...";
+    notifyListeners();
+      await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
+        languages = jsonDecode(langlist);
+        langState = 1 / (languages.length + 1);
+        notifyListeners();
+        for(int i=0; i < languages.length; i++){
+          await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
+            status = "Reading ${languages[i]["name"]}";
+            langState = (languages.length + 1) / (i+1);
+            notifyListeners();
+            dictionary[languages[i]["id"]] = jsonDecode(langentry);
+          });
+        }
+      });
+    status = "Dictionary loaded!";
+    langReady = true;
+    notifyListeners();
   }
 
   void startTdReceiveUpdates() async {
