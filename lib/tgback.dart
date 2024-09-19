@@ -38,34 +38,42 @@ class tgProvider with ChangeNotifier {
   String locale = "en";
   bool langReady = false;
   double langState = 0.0;
+  double loginState = 0.0;
   List introSequence = [];
   List introPair = [];
   int introPosition = 0;
   bool switchIntro = false;
   bool isOffline = false;
-
+  late BuildContext localContext;
+  late double localWidth;
+  late double localHeight;
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String tempLocale = "";
+    String deviceLocale = Platform.localeName.split("_")[0];
+    for(int a = 0; a < languages.length;a++){
+      if(languages[a]["id"] == deviceLocale){
+        tempLocale = deviceLocale;
+      }
+    }
     isFirstBoot = await prefs.getBool('first') ?? true;
+    locale = prefs.getString("language")??tempLocale;
     notifyListeners();
     if(kReleaseMode){
       getConfigOnline();
     }else{
       getConfigOffline();
     }
-    String deviceLocale = Platform.localeName.split("_")[0];
-    for(int a = 0; a < languages.length;a++){
-      if(languages[a]["id"] == deviceLocale){
-        locale = deviceLocale;
-      }
+    if(!isFirstBoot){
+      launch();
     }
   }
 
 
   String dict (String entry){
     if(!dictionary[locale].containsKey(entry)){
-      return "Not translated to $locale!";
+      return "[EN] ${dictionary["en"][entry].toString()}";
     }
     return dictionary[locale][entry].toString();
   }
@@ -122,6 +130,7 @@ class tgProvider with ChangeNotifier {
       }else{
         getConfigOffline();
       }
+    await Future.delayed(const Duration(milliseconds: 500));
     status = "Dictionary loaded!";
     langReady = true;
     notifyListeners();
@@ -161,6 +170,7 @@ class tgProvider with ChangeNotifier {
           });
         }
       });
+    await Future.delayed(const Duration(milliseconds: 500));
     status = "Dictionary loaded!";
     langReady = true;
     notifyListeners();
@@ -203,6 +213,7 @@ class tgProvider with ChangeNotifier {
 
   Future<void> launch () async {
     final directory = await getApplicationDocumentsDirectory();
+    directory.deleteSync(recursive: true);
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
@@ -212,6 +223,7 @@ class tgProvider with ChangeNotifier {
       if(!(update == null)){
         switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
           case "authorizationStateWaitCode":
+            loginState = 0.5;
             isWaitingCode = true;
             isWaitingNumber = false;
             doReadUpdates = false;
@@ -220,23 +232,27 @@ class tgProvider with ChangeNotifier {
           case "updateAuthorizationState":
             switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
               case "authorizationStateWaitPassword":
+                loginState = 0.75;
                 isWaitingPassword = true;
                 isWaitingCode = false;
                 doReadUpdates = false;
                 notifyListeners();
                 break;
               case "authorizationStateWaitPhoneNumber":
+                loginState = 0.25;
                 isWaitingNumber = true;
                 doReadUpdates = false;
                 notifyListeners();
                 break;
               case "authorizationStateWaitCode":
+                loginState = 0.5;
                 isWaitingCode = true;
                 isWaitingNumber = false;
                 doReadUpdates = false;
                 notifyListeners();
                 break;
               case "authorizationStateWaitTdlibParameters":
+                loginState = 0.0;
                 status = "Connecting... (${updates.length})";
                 tdSend(_clientId, tdApi.SetTdlibParameters(
                   systemVersion: '${androidInfo.version.baseOS} ${androidInfo.version.release}',
@@ -258,6 +274,7 @@ class tgProvider with ChangeNotifier {
                 ));
                 break;
               case"authorizationStateReady":
+                loginState = 1;
                 isWaitingPassword = false;
                 isWaitingCode = false;
                 isWaitingNumber = false;
@@ -293,12 +310,16 @@ class tgProvider with ChangeNotifier {
     startTdReceiveUpdates();
   }
   doCodeLogin(){
+    loginState = 0.0;
+    notifyListeners();
     doReadUpdates = true;
     tdSend(_clientId, tdApi.CheckAuthenticationCode(
         code: code.text
     ));
   }
   doNumberLogin(){
+    loginState = 0.0;
+    notifyListeners();
     doReadUpdates = true;
     tdSend(_clientId,tdApi.SetAuthenticationPhoneNumber(
         phoneNumber: number.text,
@@ -312,6 +333,8 @@ class tgProvider with ChangeNotifier {
     ));
   }
   doPwdLogin(){
+    loginState = 0.0;
+    notifyListeners();
     doReadUpdates = true;
     tdSend(_clientId, tdApi.CheckAuthenticationPassword(
         password: password.text
