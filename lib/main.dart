@@ -21,10 +21,6 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    WidgetsFlutterBinding.ensureInitialized();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<tgProvider>(context, listen: false).init();
-    });
     return HomeScreen();
   }
 }
@@ -34,6 +30,10 @@ class HomeScreen extends StatelessWidget {
   static final _defaultDarkColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.teal, brightness: Brightness.dark);
   @override
   Widget build(BuildContext context) {
+    WidgetsFlutterBinding.ensureInitialized();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<tgProvider>(context, listen: false).init();
+    });
     return DynamicColorBuilder(builder: (lightColorScheme, darkColorScheme) {
       return MaterialApp(
           theme: ThemeData(
@@ -56,12 +56,49 @@ class HomeScreen extends StatelessWidget {
                       provider.localContext = context;
                       provider.localWidth = scaffoldWidth;
                       provider.localHeight = scaffoldHeight;
-                      return AnimatedCrossFade(
+                      return provider.langReady?AnimatedCrossFade(
                         alignment: Alignment.center,
                         duration: Duration(milliseconds: 500),
                         firstChild: firstBoot(),
                         secondChild: provider.isFirstBoot ? firstBoot() : tgLogin(),
                         crossFadeState: provider.isFirstBoot ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                      ):Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 350,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 15,
+                                child: Padding(padding: EdgeInsets.all(15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Loading...",
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(bottom: 5),
+                                        child: Text(
+                                          provider.status,
+                                        ),
+                                      ),
+                                      LinearProgressIndicator(
+                                        value: provider.langState == 0.0 ? null : provider.langState,
+                                        borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                      )
+                                    ],
+                                  ),),
+                              ),
+                            ),
+                          )
+                        ],
                       );
                       return provider.isFirstBoot ? firstBoot() : tgLogin();
                     },
@@ -123,7 +160,7 @@ class firstBootState extends State<firstBoot> {
           scaffoldHeight = provider.localHeight;
           return Container(
             height: scaffoldHeight,
-            child: provider.langReady?Padding(
+            child: Padding(
               padding: EdgeInsets.all(5),
               child: Stack(
                 children: [
@@ -472,44 +509,6 @@ class firstBootState extends State<firstBoot> {
                   )
                 ],
               ),
-            )
-                : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Center(
-                  child: Container(
-                    width: 350,
-                    child: Card(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      elevation: 15,
-                      child: Padding(padding: EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Loading...",
-                              style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 5),
-                              child: Text(
-                                provider.status,
-                              ),
-                            ),
-                            LinearProgressIndicator(
-                              value: provider.langState == 0.0 ? null : provider.langState,
-                              borderRadius: const BorderRadius.all(Radius.circular(3)),
-                            )
-                          ],
-                        ),),
-                    ),
-                  ),
-                )
-              ],
             ),
           );
         },

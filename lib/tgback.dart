@@ -50,21 +50,23 @@ class tgProvider with ChangeNotifier {
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String tempLocale = "";
-    String deviceLocale = Platform.localeName.split("_")[0];
-    for(int a = 0; a < languages.length;a++){
-      if(languages[a]["id"] == deviceLocale){
-        tempLocale = deviceLocale;
-      }
-    }
-    isFirstBoot = await prefs.getBool('first') ?? true;
-    locale = prefs.getString("language")??tempLocale;
-    notifyListeners();
     if(kReleaseMode){
       getConfigOnline();
     }else{
       getConfigOffline();
     }
+    isFirstBoot = await prefs.getBool('first') ?? true;
+    if(prefs.containsKey("language")){
+      locale = prefs.getString("language")??"en";
+    }else{
+      String deviceLocale = Platform.localeName.split("_")[0];
+      for(int a = 0; a < languages.length;a++){
+        if(languages[a]["id"] == deviceLocale){
+          locale = deviceLocale;
+        }
+      }
+    }
+    notifyListeners();
     if(!isFirstBoot){
       launch();
     }
@@ -72,6 +74,11 @@ class tgProvider with ChangeNotifier {
 
 
   String dict (String entry){
+    if(!dictionary.containsKey(locale)){
+      print(locale);
+      print(dictionary);
+      return "Localisation engine FAILED [Default locale not initialized]";
+    }
     if(!dictionary[locale].containsKey(entry)){
       return "[EN] ${dictionary["en"][entry].toString()}";
     }
