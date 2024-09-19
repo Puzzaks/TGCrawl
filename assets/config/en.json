@@ -27,5 +27,5 @@
   "code_title": "Enter the code",
   "code_desc": "Please, enter the code, sent to you by Telegram.",
   "password_title": "Enter your password",
-  "password_desc": "Please, enter your password to complete login. Remember, we do not save any of your details, they are needed just to log you in within this app, and we won't have access to your messages."
+  "password_desc": "Please, enter your password to complete login. Remember, NONE of your data (credentials, messages, etc.) won't leave this device. Your privacy and safety is important for us."
 }
