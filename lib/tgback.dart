@@ -19,6 +19,8 @@ class tgProvider with ChangeNotifier {
   TextEditingController number = TextEditingController();
   TextEditingController code = TextEditingController();
   TextEditingController password = TextEditingController();
+  TextEditingController channelSearch = TextEditingController();
+  TextEditingController channelFilter = TextEditingController();
   bool isLoggedIn = false;
   bool isWaitingPassword = false;
   bool isWaitingCode = false;
@@ -44,9 +46,21 @@ class tgProvider with ChangeNotifier {
   int introPosition = 0;
   bool switchIntro = false;
   bool isOffline = false;
+  bool crowdsource = false;
+  bool crowdsource_final = false;
   late BuildContext localContext;
   late double localWidth;
   late double localHeight;
+  String loginInfo = "";
+  int userID = 0;
+  String userPic = "";
+  Map userData = {};
+
+
+  Map candidateChannel = {};
+  Map currentChannel = {};
+  Map addedIndexes = {};
+  List displayIndexes = [];
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -56,16 +70,8 @@ class tgProvider with ChangeNotifier {
       getConfigOffline();
     }
     isFirstBoot = await prefs.getBool('first') ?? true;
-    if(prefs.containsKey("language")){
-      locale = prefs.getString("language")??"en";
-    }else{
-      String deviceLocale = Platform.localeName.split("_")[0];
-      for(int a = 0; a < languages.length;a++){
-        if(languages[a]["id"] == deviceLocale){
-          locale = deviceLocale;
-        }
-      }
-    }
+    crowdsource = await prefs.getBool('crowdsource') ?? false;
+    crowdsource_final = await prefs.getBool('crowdsource_final') ?? false;
     notifyListeners();
     if(!isFirstBoot){
       launch();
@@ -73,10 +79,26 @@ class tgProvider with ChangeNotifier {
   }
 
 
+  decideLanguage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String deviceLocale = Platform.localeName.split("_")[0];
+    if(prefs.containsKey("language")){
+      print("saved language found");
+      locale = await prefs.getString("language")??"en";
+    }else{
+      print("saved language not found");
+      for(int a = 0; a < languages.length;a++){
+        print("comparing local language $locale to known ${languages[a]["id"]}");
+        if(languages[a]["id"] == deviceLocale){
+          locale = deviceLocale;
+          print("setting language $locale");
+        }
+      }
+    }
+  }
+
   String dict (String entry){
     if(!dictionary.containsKey(locale)){
-      print(locale);
-      print(dictionary);
       return "Localisation engine FAILED [Default locale not initialized]";
     }
     if(!dictionary[locale].containsKey(entry)){
@@ -95,6 +117,19 @@ class tgProvider with ChangeNotifier {
     introPair.add(introSequence[introPosition]);
     introPair.add(introSequence[introPosition + 1]);
     notifyListeners();
+  }
+
+  unprogressIntroSequence() async {
+    introPosition = introPosition - 1;
+        introPair.clear();
+        introPair.add(introSequence[introPosition + 1]);
+        introPair.add(introSequence[introPosition]);
+        switchIntro = false;
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 500));
+        switchIntro = true;
+        introPair.add(introSequence[introPosition]);
+        notifyListeners();
   }
 
   getConfigOnline() async {
@@ -121,6 +156,7 @@ class tgProvider with ChangeNotifier {
         langState = 2 / (languages.length + 2);
         notifyListeners();
         languages = jsonDecode(response.body);
+        decideLanguage();
         for(int i=0; i < languages.length; i++){
           status = "Downloading ${languages[i]["name"]}";
           langState = (languages.length + 2) / (i+2);
@@ -166,6 +202,7 @@ class tgProvider with ChangeNotifier {
     notifyListeners();
       await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
         languages = jsonDecode(langlist);
+        decideLanguage();
         langState = 1 / (languages.length + 1);
         notifyListeners();
         for(int i=0; i < languages.length; i++){
@@ -187,7 +224,7 @@ class tgProvider with ChangeNotifier {
     while (true) {
       if(doReadUpdates){
         var result = await tdReceive(1);
-        _tdReceiveSubject.add(result?.toJson().cast<dynamic, dynamic>());
+        _tdReceiveSubject.add(result);
         await Future.delayed(Duration(milliseconds: 100));
       }else{
         await Future.delayed(Duration(milliseconds: 100));
@@ -218,84 +255,10 @@ class tgProvider with ChangeNotifier {
     return jsonString;
   }
 
-  Future<void> launch () async {
-    final directory = await getApplicationDocumentsDirectory();
-    directory.deleteSync(recursive: true);
-    final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
+  sendTdLibParams() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    await TdPlugin.initialize(tdlibPath);
-    _clientId = tdCreate();
-    _tdReceiveSubscription = _tdReceiveSubject.stream.listen((update) {
-      if(!(update == null)){
-        switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
-          case "authorizationStateWaitCode":
-            loginState = 0.5;
-            isWaitingCode = true;
-            isWaitingNumber = false;
-            doReadUpdates = false;
-            notifyListeners();
-            break;
-          case "updateAuthorizationState":
-            switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
-              case "authorizationStateWaitPassword":
-                loginState = 0.75;
-                isWaitingPassword = true;
-                isWaitingCode = false;
-                doReadUpdates = false;
-                notifyListeners();
-                break;
-              case "authorizationStateWaitPhoneNumber":
-                loginState = 0.25;
-                isWaitingNumber = true;
-                doReadUpdates = false;
-                notifyListeners();
-                break;
-              case "authorizationStateWaitCode":
-                loginState = 0.5;
-                isWaitingCode = true;
-                isWaitingNumber = false;
-                doReadUpdates = false;
-                notifyListeners();
-                break;
-              case "authorizationStateWaitTdlibParameters":
-                loginState = 0.0;
-                status = "Connecting... (${updates.length})";
-                tdSend(_clientId, tdApi.SetTdlibParameters(
-                  systemVersion: '${androidInfo.version.baseOS} ${androidInfo.version.release}',
-                  useTestDc: false,
-                  useSecretChats: false,
-                  useMessageDatabase: true,
-                  useFileDatabase: true,
-                  useChatInfoDatabase: true,
-                  filesDirectory: "${directory.path}/files",
-                  databaseDirectory: "${directory.path}/DB",
-                  systemLanguageCode: Platform.localeName.split("_")[0],
-                  deviceModel: "${androidInfo.manufacturer} ${androidInfo.model}",
-                  applicationVersion: '0.69',
-                  apiId: 3435077,
-                  apiHash: "0369c1a073f7c720ca79508156201f3a",
-                  databaseEncryptionKey: '0369c1a073f7c720ca79508156201f3a',
-                  enableStorageOptimizer: false,
-                  ignoreFileNames: false,
-                ));
-                break;
-              case"authorizationStateReady":
-                loginState = 1;
-                isWaitingPassword = false;
-                isWaitingCode = false;
-                isWaitingNumber = false;
-                doReadUpdates = false;
-                isLoggedIn = true;
-                notifyListeners();
-                break;
-            }
-            break;
-        }
-        updates.insert(0, update);
-        notifyListeners();
-      }
-    });
+    final directory = await getApplicationDocumentsDirectory();
     tdSend(_clientId, tdApi.SetTdlibParameters(
       systemVersion: '${androidInfo.version.baseOS} ${androidInfo.version.release}',
       useTestDc: false,
@@ -314,8 +277,172 @@ class tgProvider with ChangeNotifier {
       enableStorageOptimizer: false,
       ignoreFileNames: false,
     ));
+  }
+
+  Future <String> getPic(file) async {
+    tdSend(_clientId, tdApi.DownloadFile(fileId: file, priority: 1, offset: 0, limit: 0, synchronous: true));
+    bool gotPic = false;
+    while (!gotPic) {
+      var update = (await tdReceive(1)?.toJson())!;
+      if(update["@type"] == "file"){
+        gotPic = true;
+        return update["local"]["path"];
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+    return "";
+  }
+
+  updateIndexedChannels (String channelID, Map channelData) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    addedIndexes[channelID] = channelData;
+    prefs.setString("addedIndexes", jsonEncode(addedIndexes));
+  }
+  readIndexedChannels () async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if(prefs.containsKey("addedIndexes")){
+      addedIndexes = await jsonDecode(prefs.getString("addedIndexes")??"{}");
+    }
+    filterIndexedChannels();
+  }
+
+  checkFilter (key, channelData){
+    if(key.trim() == ""){
+      return true;
+    }
+    if(channelData["id"].toString().contains(key)){
+      return true;
+    }
+    if(channelData["title"].toLowerCase().contains(key.toLowerCase().replaceAll("@", "").replaceAll("https://t.me/", ""))){
+      return true;
+    }
+    return false;
+  }
+  filterIndexedChannels (){
+    String searchTerm = channelFilter.text;
+    displayIndexes.clear();
+    for(int i = 0; i < addedIndexes.length; i++){
+      if(checkFilter(searchTerm, addedIndexes[addedIndexes.keys.toList()[i]])){
+        displayIndexes.add(addedIndexes[addedIndexes.keys.toList()[i]]);
+      }
+    }
+    notifyListeners();
+  }
+
+  searchChannel() async {
+    bool gotChannel = false;
+    tdSend(_clientId, tdApi.SearchPublicChat(username: channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim()));
+    candidateChannel = {};
+    notifyListeners();
+    while (!gotChannel) {
+      var update = (await tdReceive(1)?.toJson())!;
+      if(update["@type"] == "chat"){
+        if(update["type"]["is_channel"]){
+          candidateChannel = update;
+          print("getPic!Prerequisite: $candidateChannel");
+          await getPic(update["photo"]["big"]["id"]).then((file){
+            candidateChannel["picfile"] = file;
+          });
+          gotChannel = true;
+          notifyListeners();
+        }
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
+  handleLoggedIn() async {
+    doReadUpdates = false;
+    tdSend(_clientId,tdApi.GetMe());
+    bool gotUser = false;
+    while (!gotUser) {
+      var update = (await tdReceive(1)?.toJson())!;
+      if(update["@type"] == "user"){
+        userData = update;
+        await getPic(update["profile_photo"]["big"]["id"]).then((file){
+          userPic = file;
+        });
+        notifyListeners();
+        gotUser = true;
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
+  Future<void> launch () async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
+    await TdPlugin.initialize(tdlibPath);
+    _clientId = tdCreate();
+    isLoggedIn = await prefs.getBool('LoggedIn') ?? false;
+    _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
+    // loginInfo = "${updateRaw?.toJson().toString()}\n$loginInfo";
+    var update = updateRaw?.toJson().cast<dynamic, dynamic>();
+    if(!(update == null)){
+      notifyListeners();
+      switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
+        case "updateOption":
+          if(jsonDecode(jsonify(raw: update.toString()))["name"].toString() == "my_id"){
+            userID = int.parse(jsonDecode(jsonify(raw: update.toString()))["value"]["value"]);
+            notifyListeners();
+          }
+          break;
+        case "authorizationStateWaitCode":
+          loginState = 0.5;
+          isWaitingCode = true;
+          isWaitingNumber = false;
+          doReadUpdates = false;
+          notifyListeners();
+          break;
+        case "updateAuthorizationState":
+          switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
+            case "authorizationStateWaitPassword":
+              loginState = 0.75;
+              isWaitingPassword = true;
+              isWaitingCode = false;
+              doReadUpdates = false;
+              notifyListeners();
+              break;
+            case "authorizationStateWaitPhoneNumber":
+              loginState = 0.25;
+              isWaitingNumber = true;
+              doReadUpdates = false;
+              notifyListeners();
+              break;
+            case "authorizationStateWaitCode":
+              loginState = 0.5;
+              isWaitingCode = true;
+              isWaitingNumber = false;
+              doReadUpdates = false;
+              notifyListeners();
+              break;
+            case "authorizationStateWaitTdlibParameters":
+              loginState = 0.0;
+              status = "Connecting... (${updates.length})";
+                sendTdLibParams();
+              break;
+            case"authorizationStateReady":
+              prefs.setBool('LoggedIn', true);
+              loginState = 1;
+              isWaitingPassword = false;
+              isWaitingCode = false;
+              isWaitingNumber = false;
+              doReadUpdates = false;
+              isLoggedIn = true;
+              notifyListeners();
+              handleLoggedIn();
+              break;
+          }
+          break;
+      }
+      updates.insert(0, update);
+      notifyListeners();
+    }
+    });
+    sendTdLibParams();
     startTdReceiveUpdates();
   }
+
   doCodeLogin(){
     loginState = 0.0;
     notifyListeners();

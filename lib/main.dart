@@ -312,7 +312,63 @@ class firstBootState extends State<firstBoot> {
                               )
                                   : infoCard(scaffoldWidth, provider.dict(provider.introPair[0]["title"]), provider.dict(provider.introPair[0]["description"]), context)
                                   : infoCard(scaffoldWidth, provider.dict(provider.introPair[0]["title"]), provider.dict(provider.introPair[0]["description"]), context),
-                              secondChild: infoCard(scaffoldWidth, provider.dict(provider.introPair[1]["title"]), provider.dict(provider.introPair[1]["description"]), context),
+                              secondChild: provider.introSequence[provider.introPosition].containsKey("selector")
+                                  ?provider.introSequence[provider.introPosition]["selector"]["type"] == "language"
+                                  ? Container(
+                                width: scaffoldWidth,
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          provider.dict(provider.introPair[1]["title"]),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.dict(provider.introPair[1]["description"]),
+                                            style: TextStyle(
+                                                fontSize: 16
+                                            )
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 15),
+                                          child: DropdownMenu(
+                                            controller: provider.languageSelector,
+                                            initialSelection: provider.locale,
+                                            onSelected: (language) async {
+                                              provider.locale = language!;
+                                              final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                              prefs.setString("language", language!);
+                                              setState(() {
+
+                                              });
+                                            },
+                                            enableSearch: true,
+                                            width: scaffoldWidth - 48,
+                                            label: Text(provider.dict("language_select")),
+                                            leadingIcon: const Icon(Icons.language_rounded),
+                                            dropdownMenuEntries: provider.languages.map((language) {
+                                              return DropdownMenuEntry(
+                                                value: language["id"],
+                                                label: language["origin"],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              )
+                                  : infoCard(scaffoldWidth, provider.dict(provider.introPair[1]["title"]), provider.dict(provider.introPair[1]["description"]), context)
+                                  : infoCard(scaffoldWidth, provider.dict(provider.introPair[1]["title"]), provider.dict(provider.introPair[1]["description"]), context),
                               crossFadeState: !provider.switchIntro? CrossFadeState.showFirst : CrossFadeState.showSecond,
                             ),
                             Container(
@@ -320,47 +376,99 @@ class firstBootState extends State<firstBoot> {
                               child: AnimatedCrossFade(
                                 alignment: Alignment.center,
                                 duration: Duration(milliseconds: 500),
-                                firstChild: Card(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  elevation: 5,
-                                  clipBehavior: Clip.hardEdge,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: InkWell(
-                                    onTap: () async {
-                                      provider.launch();
-                                      provider.isFirstBoot = false;
-                                      final SharedPreferences prefs = await SharedPreferences.getInstance();
-                                      await prefs.setBool('first', false);
-                                      setState(() {
-
-                                      });
-                                    },
-                                    child: Padding(
-                                      padding: EdgeInsets.all(15),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            provider.dict("done"),
-                                            style: TextStyle(
-                                                fontSize: 19,
-                                                fontWeight: FontWeight.bold
-                                            ),
+                                firstChild: Row(
+                                  children: [
+                                    Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          provider.unprogressIntroSequence();
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(16),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                  Icons.navigate_before_rounded
+                                              )
+                                            ],
                                           ),
-                                          Icon(
-                                              Icons.done_rounded
-                                          )
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    Expanded(child: Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          provider.launch();
+                                          provider.isFirstBoot = false;
+                                          final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                          await prefs.setBool('first', false);
+                                          setState(() {
+
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                provider.dict("done"),
+                                                style: TextStyle(
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Icon(
+                                                  Icons.done_rounded
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ))
+                                  ],
                                 ),
                                 secondChild: provider.introSequence[provider.introPosition].containsKey("selector")
                                     ? provider.introSequence[provider.introPosition]["selector"]["type"] == "bool"
                                     ? Row(
                                   children: [
+                                    Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          provider.unprogressIntroSequence();
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(16),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                  Icons.navigate_before_rounded
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                     Expanded(
                                         child: Card(
                                           color: Theme.of(context).colorScheme.onPrimary,
@@ -464,36 +572,64 @@ class firstBootState extends State<firstBoot> {
                                     ),
                                   ),
                                 )
-                                    : Card(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  elevation: 5,
-                                  clipBehavior: Clip.hardEdge,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: InkWell(
-                                    onTap: (){
-                                      provider.progressIntroSequence();
-                                    },
-                                    child: Padding(
-                                      padding: EdgeInsets.all(15),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            provider.dict("next"),
-                                            style: TextStyle(
-                                                fontSize: 19,
-                                                fontWeight: FontWeight.bold
-                                            ),
+                                    : Row(
+                                  children: [
+                                    Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          provider.unprogressIntroSequence();
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(16),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                  Icons.navigate_before_rounded
+                                              )
+                                            ],
                                           ),
-                                          Icon(
-                                              Icons.navigate_next_rounded
-                                          )
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    Expanded(child: Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          provider.progressIntroSequence();
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                provider.dict("next"),
+                                                style: TextStyle(
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Icon(
+                                                  Icons.navigate_next_rounded
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ))
+                                  ],
                                 ),
                                 crossFadeState: provider.introPosition > (provider.introSequence.length - 3)? CrossFadeState.showFirst : CrossFadeState.showSecond,
                               ),
@@ -576,7 +712,11 @@ class tgLoginState extends State<tgLogin> {
               child: AnimatedCrossFade(
                 alignment: Alignment.center,
                 duration: Duration(milliseconds: 500),
-                firstChild: Text("LOGGED IN MOTHERFUCKER"),
+                firstChild: Container(
+                  height: scaffoldHeight,
+                  width: scaffoldWidth,
+                  child: HomePage(),
+                ),
                 secondChild: Container(
                   height: scaffoldHeight,
                   child: AnimatedCrossFade(
@@ -621,6 +761,893 @@ class tgLoginState extends State<tgLogin> {
                   ),
                 ),
                 crossFadeState: provider.isLoggedIn? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+
+  @override
+  HomePageState createState() => HomePageState();
+}
+
+class HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5,), // shit code
+                  AnimatedCrossFade(
+                    alignment: Alignment.center,
+                    duration: Duration(milliseconds: 500),
+                    firstChild: Padding(padding: EdgeInsets.symmetric(horizontal: 5),
+                      child: Container(
+                        width: scaffoldWidth,
+                        height: 72,
+                        child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          child: Padding(padding: EdgeInsets.all(5),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.downloading_rounded,
+                                  size: 50,
+                                ),
+                                SizedBox(width: 15,),
+                                Container(
+                                  height: 64,
+                                  width: scaffoldWidth - 103,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        provider.dict("user_loading_title"),
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Text(
+                                          provider.dict("user_loading_desc"),
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),), // number
+                    secondChild: Padding(padding: EdgeInsets.symmetric(horizontal: 5),
+                      child: Container(
+                        width: scaffoldWidth,
+                        child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          child: Padding(padding: EdgeInsets.all(5),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: provider.userPic == "" ? Container() : Image.file(
+                                    File(provider.userPic),
+                                    width: 60,
+                                    height: 60,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        provider.dict("ready"),
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Text(
+                                          "${provider.dict("logged_as")}${provider.userData["first_name"].toString()}${provider.userData["last_name"].toString() == ""?"":" "}${provider.userData["last_name"].toString()}",
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),),
+                    crossFadeState: provider.userPic == "" ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                  ), // user info
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: AnimatedCrossFade(
+                      alignment: Alignment.center,
+                      duration: Duration(milliseconds: 500),
+                      firstChild: Padding(padding: EdgeInsets.all(5),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: scaffoldWidth,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 5,
+                                child: Padding(padding: EdgeInsets.all(15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        provider.dict("sharing_disabled_title"),
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Text(
+                                          provider.dict("sharing_disabled_desc"),
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                          prefs.setBool("crowdsource", true);
+                                          prefs.setBool("crowdsource_final", true);
+                                          setState(() {
+                                            provider.crowdsource_final = true;
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                provider.dict("crowdsource_yes"),
+                                                style: TextStyle(
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Icon(
+                                                  Icons.navigate_next_rounded
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                ),
+                                Expanded(
+                                    child: Card(
+                                      color: Theme.of(context).colorScheme.errorContainer,
+                                      elevation: 5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                          prefs.setBool("crowdsource", false);
+                                          prefs.setBool("crowdsource_final", true);
+                                          setState(() {
+                                            provider.crowdsource_final = true;
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                provider.dict("crowdsource_no"),
+                                                style: TextStyle(
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Icon(
+                                                  Icons.navigate_next_rounded
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                ),
+                              ],
+                            )
+                          ],
+                        ),),
+                      secondChild: Container(
+                        width: scaffoldWidth,
+                        child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          child: Padding(padding: EdgeInsets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.dict("sharing_enabled_title"),
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      crossFadeState: (!provider.crowdsource && !provider.crowdsource_final) ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    ),
+                  ), // crowdsource request
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: Card(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              elevation: 5,
+                              clipBehavior: Clip.hardEdge,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: InkWell(
+                                onTap: () async {
+                                  provider.readIndexedChannels();
+                                  provider.filterIndexedChannels();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexesPage()),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(15),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        provider.dict("indexed_channels"),
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Icon(
+                                          Icons.navigate_next_rounded
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                        ),
+                        Expanded(
+                            child: Card(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              elevation: 5,
+                              clipBehavior: Clip.hardEdge,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: InkWell(
+                                onTap: () async {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(15),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        provider.dict("index_channel"),
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Icon(
+                                          Icons.navigate_next_rounded
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )
+                        ),
+                      ],
+                    ),
+                  ), // indexing options
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      clipBehavior: Clip.hardEdge,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: InkWell(
+                        onTap: () async {
+
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.all(15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                provider.dict("settings"),
+                                style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              Icon(
+                                  Icons.settings_rounded
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class NewIndexPage extends StatefulWidget {
+
+  @override
+  NewIndexPageState createState() => NewIndexPageState();
+}
+
+class NewIndexPageState extends State<NewIndexPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              width: scaffoldWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5,),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      child: Padding(padding: EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              provider.dict("channel_search"),
+                              style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                            Text(
+                                provider.dict("channel_search_desc"),
+                                style: TextStyle(
+                                    fontSize: 16
+                                )
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top:15),
+                              child: TextField(
+                                controller: provider.channelSearch,
+                                autofocus: true,
+                                keyboardType: TextInputType.text,
+                                obscureText: false,
+                                textAlignVertical: TextAlignVertical.top,
+                                scrollPadding: const EdgeInsets.all(0),
+                                expands: false,
+                                minLines: null,
+                                decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                                  prefixIcon: Icon(Icons.search_rounded),
+                                  labelText: provider.dict("channel_search"),
+                                  border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      children: [
+                        Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: (){
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(17),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                      Icons.navigate_before_rounded
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: () async {
+                              provider.searchChannel();
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    provider.dict("search"),
+                                    style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  Icon(
+                                      Icons.search_rounded
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ))
+                      ],
+                    ),
+                  ),
+                  AnimatedCrossFade(
+                    alignment: Alignment.center,
+                    duration: Duration(milliseconds: 500),
+                    firstChild: Container(), // number
+                    secondChild: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      child: Container(
+                        width: scaffoldWidth,
+                        child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: (){
+                              provider.updateIndexedChannels(provider.candidateChannel["id"].toString(), provider.candidateChannel);
+                              provider.currentChannel = provider.candidateChannel;
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
+                              );
+                              provider.channelSearch.text = "";
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(5),
+                              child: Row(
+                                children: [
+                                  provider.candidateChannel.isEmpty?Container():ClipRRect(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    child: Image.file(
+                                      File(provider.candidateChannel["picfile"]),
+                                      width: 60,
+                                      height: 60,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          provider.candidateChannel.isEmpty?"":provider.candidateChannel["title"],
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.candidateChannel.isEmpty?"":"${provider.dict("id")} ${provider.candidateChannel["id"]}",
+                                            style: TextStyle(
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),),
+                    crossFadeState: provider.candidateChannel.isEmpty ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class IndexPage extends StatefulWidget {
+
+  @override
+  IndexPageState createState() => IndexPageState();
+}
+
+class IndexPageState extends State<IndexPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              width: scaffoldWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5,),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      children: [
+                        Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: (){
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(19),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.navigate_before_rounded,
+                                    size: 32,
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          child: Padding(padding: EdgeInsets.all(5),
+                            child: Row(
+                              children: [
+                                provider.currentChannel.isEmpty?Container():ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: Image.file(
+                                    File(provider.currentChannel["picfile"]),
+                                    width: 60,
+                                    height: 60,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        provider.currentChannel.isEmpty?"":provider.currentChannel["title"],
+                                        style: TextStyle(
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Text(
+                                          provider.currentChannel.isEmpty?"":"${provider.dict("id")} ${provider.currentChannel["id"]}",
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ))
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class IndexesPage extends StatefulWidget {
+
+  @override
+  IndexesPageState createState() => IndexesPageState();
+}
+
+class IndexesPageState extends State<IndexesPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              width: scaffoldWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(height: 5,),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      children: [
+                        Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: (){
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.navigate_before_rounded,
+                                    size: 32,
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Padding(
+                          padding: EdgeInsets.all(15),
+                          child: TextField(
+                            onChanged: (text){
+                              provider.filterIndexedChannels();
+                            },
+                            controller: provider.channelFilter,
+                            autofocus: true,
+                            keyboardType: TextInputType.text,
+                            obscureText: false,
+                            textAlignVertical: TextAlignVertical.top,
+                            scrollPadding: const EdgeInsets.all(0),
+                            expands: false,
+                            minLines: null,
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.only(top:15, bottom: 0,left: 10, right: 10),
+                              prefixIcon: Icon(Icons.filter_list_rounded),
+                              labelText: provider.dict("filter_channels"),
+                              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
+                            ),
+                          ),
+                        ))
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: scaffoldHeight - 125,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: provider.displayIndexes.map((channel) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            child: Container(
+                              width: scaffoldWidth,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 5,
+                                clipBehavior: Clip.hardEdge,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: InkWell(
+                                  onTap: (){
+                                    provider.currentChannel = channel;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          child: Image.file(
+                                            File(channel["picfile"]),
+                                            width: 60,
+                                            height: 60,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                channel["title"],
+                                                style: TextStyle(
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Text(
+                                                  "${provider.dict("id")} ${channel["id"]}",
+                                                  style: TextStyle(
+                                                      fontSize: 16
+                                                  )
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),);
+                        }).toList().cast<Widget>(),
+                      ),
+                    ),
+                  )
+                ],
               ),
             );
           },
