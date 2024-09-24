@@ -44,3 +44,7 @@ flutter:
     - assets/config/intro.json
     - assets/config/uk.json
     - assets/config/en.json
+  fonts:
+    - family: Flow
+      fonts:
+        - asset: assets/fonts/FlowCircular-Regular.ttf

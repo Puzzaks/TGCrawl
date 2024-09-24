@@ -55,12 +55,17 @@ class tgProvider with ChangeNotifier {
   int userID = 0;
   String userPic = "";
   Map userData = {};
+  bool channelNotFound = false;
+  bool searchingChannels = false;
 
 
+  bool isIndexing = false;
   Map candidateChannel = {};
   Map currentChannel = {};
   Map addedIndexes = {};
   List displayIndexes = [];
+  Map indexedChannels = {};
+  List indexedMessages = [];
 
   void init() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -74,6 +79,7 @@ class tgProvider with ChangeNotifier {
     crowdsource_final = await prefs.getBool('crowdsource_final') ?? false;
     notifyListeners();
     if(!isFirstBoot){
+      readIndexedChannels();
       launch();
     }
   }
@@ -293,6 +299,69 @@ class tgProvider with ChangeNotifier {
     return "";
   }
 
+  getLastMessage (channelID, lastMessageID) async {
+    bool gotMsgData = false;
+    tdSend(_clientId, tdApi.GetMessageLink(chatId: channelID,messageId: lastMessageID, mediaTimestamp: 0, forAlbum: true, inMessageThread: false));
+    while (!gotMsgData) {
+      var update2 = (await tdReceive(1)?.toJson())!;
+      if(update2["@type"] == "messageLink"){
+        gotMsgData = true;
+        currentChannel["lastmsgid"] =  update2["link"].replaceAll("https://t.me/","").split("/")[1];
+        notifyListeners();
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+  getIndexing() async {
+    while (isIndexing) {
+      print("indexing! ${jsonEncode(currentChannel)}");
+      tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 2, onlyLocal: false));
+      bool gotNext = false;
+      while (!gotNext) {
+        var update = await tdReceive(1)?.toJson()??{};
+        print("indexed! ${jsonEncode(update)}");
+        if(update["@type"] == "messages"){
+          currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
+          currentChannel["lastindexed"] = update["messages"][1]["id"];
+          indexedMessages.insert(0, update["messages"][1]);
+          gotNext = true;
+          notifyListeners();
+          updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+        }
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+  getSubsCount(superID) async {
+    tdSend(_clientId, tdApi.GetSupergroupFullInfo(supergroupId: superID));
+    bool gotMsgs = false;
+    while (!gotMsgs) {
+      var update = await tdReceive(1)?.toJson()??{};
+      if(update["@type"] == "supergroupFullInfo"){
+        gotMsgs = true;
+        currentChannel["subs"] =  update["member_count"];
+        notifyListeners();
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
+  retreiveFullChannelInfo (id) async {
+    tdSend(_clientId, tdApi.GetChat(chatId: id));
+    bool gotChat = false;
+    while (!gotChat) {
+      var update = (await tdReceive(1)?.toJson())!;
+      if(update["@type"] == "chat"){
+        gotChat = true;
+        await getLastMessage(id, update["last_message"]["id"]);
+        await getSubsCount(update["type"]["supergroup_id"]);
+        updateIndexedChannels(id.toString(), currentChannel);
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
   updateIndexedChannels (String channelID, Map channelData) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     addedIndexes[channelID] = channelData;
@@ -330,28 +399,40 @@ class tgProvider with ChangeNotifier {
   }
 
   searchChannel() async {
-    bool gotChannel = false;
-    tdSend(_clientId, tdApi.SearchPublicChat(username: channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim()));
     candidateChannel = {};
-    notifyListeners();
-    while (!gotChannel) {
-      var update = (await tdReceive(1)?.toJson())!;
-      if(update["@type"] == "chat"){
-        if(update["type"]["is_channel"]){
-          candidateChannel = update;
-          print("getPic!Prerequisite: $candidateChannel");
-          await getPic(update["photo"]["big"]["id"]).then((file){
-            candidateChannel["picfile"] = file;
-          });
+    if(channelSearch.text.length >= 5){
+      bool gotChannel = false;
+      tdSend(_clientId, tdApi.SearchPublicChat(username: channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim()));
+      notifyListeners();
+      channelNotFound = false;
+      while (!gotChannel) {
+        var update = (await tdReceive(1)?.toJson())!;
+        if(update["@type"] == "error"){
+          candidateChannel = {};
           gotChannel = true;
+          channelNotFound = true;
           notifyListeners();
         }
+        if(update["@type"] == "chat"){
+          if(update["type"]["is_channel"]){
+            candidateChannel["title"] = update["title"];
+            candidateChannel["id"] = update["id"];
+            print("getPic!Prerequisite: $candidateChannel");
+            await getPic(update["photo"]["big"]["id"]).then((file){
+              candidateChannel["picfile"] = file;
+            });
+            gotChannel = true;
+            channelNotFound = false;
+            notifyListeners();
+          }
+        }
+        await Future.delayed(Duration(milliseconds: 100));
       }
-      await Future.delayed(Duration(milliseconds: 100));
     }
   }
 
   handleLoggedIn() async {
+    getIndexing();
     doReadUpdates = false;
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;

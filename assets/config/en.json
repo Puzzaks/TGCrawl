@@ -44,5 +44,12 @@
   "channel_search_desc": "Let's index a channel. Firstly, please, enter it's @name or link and tap search button. Next, confirm if the found channel is the correct one and let's get indexing.",
   "main_menu_back": "Go back",
   "id": "ID:",
-  "filter_channels": "Filter channels"
+  "filter_channels": "Filter channels",
+  "channel_not_found_title": "Not found!",
+  "channel_not_found_desc": "This channel ID doesn't exist, please check or copy anew and try again!",
+  "channel_view": "Channel view",
+  "messages": "Messages",
+  "subscribers": "Subscribers",
+  "indexed_title": "Indexing status",
+  "indexing_title": "Indexing"
 }
