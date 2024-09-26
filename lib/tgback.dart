@@ -70,6 +70,9 @@ class tgProvider with ChangeNotifier {
   Map knownChannels = {};
   int maxFailsBeforeRetry = 10;
   String indexingStatus = "ready_to_index";
+  int autoSaveSeconds = 15;
+  DateTime nextAutoSave = DateTime.now();
+  bool isAutoSaving = false;
 
   void init() async {
     notifyListeners();
@@ -142,6 +145,7 @@ class tgProvider with ChangeNotifier {
         introPair.add(introSequence[introPosition]);
         notifyListeners();
   }
+
 
   getConfigOnline() async {
     status = "Loading configuration...";
@@ -320,7 +324,7 @@ class tgProvider with ChangeNotifier {
   getIndexing() async {
     while (true) {
       bool gotNext = false;
-      if(isIndexing && unresolvedRelations.isEmpty){
+      if(isIndexing && unresolvedRelations.isEmpty && !isAutoSaving){
         indexingStatus = "reading_channel";
         notifyListeners();
         gotNext = false;
@@ -359,7 +363,7 @@ class tgProvider with ChangeNotifier {
   resolveRelations() async {
     while(true){
       if(unresolvedRelations.isNotEmpty){
-        print("Channels to resolve: ${unresolvedRelations.toString()}");
+        print("Channels to resolve: ${unresolvedRelations}");
         indexingStatus = "resolving_related_channel";
         notifyListeners();
         if(knownChannels.containsKey(unresolvedRelations[0])){
@@ -377,6 +381,28 @@ class tgProvider with ChangeNotifier {
     }
   }
 
+  saveAll() async {
+    print("AUTOSAVING");
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+    prefs.setString("addedIndexes", jsonEncode(addedIndexes));
+    prefs.setString("knownChannels", jsonEncode(knownChannels));
+  }
+  autoSave() async {
+    while(true){
+      if(DateTime.now().isAfter(nextAutoSave) && isIndexing){
+        isAutoSaving = true;
+        indexingStatus = "saving";
+        notifyListeners();
+        await saveAll();
+        nextAutoSave = DateTime.now().add(Duration(seconds: autoSaveSeconds));
+        isAutoSaving = false;
+        notifyListeners();
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
   addRelationToChannel(channelID, relatedChannelID, message) async {
     if(!currentChannel.containsKey("reposts")) {
       currentChannel["reposts"] = 1;
@@ -386,18 +412,18 @@ class tgProvider with ChangeNotifier {
     if(!currentChannel.containsKey("relations")) {
       currentChannel["relations"] = {};
     }
-    if(currentChannel["relations"].containsKey(relatedChannelID)){
-      currentChannel["relations"][relatedChannelID]["firstrepost"] = message["date"];
-      currentChannel["relations"][relatedChannelID]["reposts"] ++;
+    if(currentChannel["relations"].containsKey(relatedChannelID.toString())){
+      currentChannel["relations"][relatedChannelID.toString()]["firstrepost"] = message["date"];
+      currentChannel["relations"][relatedChannelID.toString()]["reposts"] ++;
     }else{
-      currentChannel["relations"][relatedChannelID] = {};
-      currentChannel["relations"][relatedChannelID]["lastrepost"] = message["date"];
-      currentChannel["relations"][relatedChannelID]["reposts"] = 1;
-      if(!knownChannels.containsKey(message["forward_info"]["origin"]["chat_id"])) {
-        unresolvedRelations.add(message["forward_info"]["origin"]["chat_id"]);
+      currentChannel["relations"][relatedChannelID.toString()] = {};
+      currentChannel["relations"][relatedChannelID.toString()]["lastrepost"] = message["date"];
+      currentChannel["relations"][relatedChannelID.toString()]["reposts"] = 1;
+      if(!knownChannels.containsKey(message["forward_info"]["origin"]["chat_id"].toString())) {
+        unresolvedRelations.add(message["forward_info"]["origin"]["chat_id"].toString());
       }
     }
-    await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+    await updateIndexedChannels(currentChannel["id"], currentChannel);
   }
 
   getUsernameAndSubs(superID) async {
@@ -424,15 +450,19 @@ class tgProvider with ChangeNotifier {
       if(failCounter > maxFailsBeforeRetry){
         print("Related Username and Subs were not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
         gotMsgs = true;
-        unresolvedRelations.add(relationID);
+        unresolvedRelations.add(relationID.toString());
       }
       var update = await tdReceive(1)?.toJson()??{};
       print("GetRelatedSupergroup: ${superID}");
       printPrettyJson(update);
       if(update["@type"] == "supergroup"){
         gotMsgs = true;
-        knownChannels[relationID]["username"] = update["usernames"]["editable_username"];
-        knownChannels[relationID]["subs"] =  update["member_count"];
+        if(update["usernames"] == null){
+          knownChannels[relationID.toString()]["username"] = "deleted";
+        }else{
+          knownChannels[relationID.toString()]["username"] = update["usernames"]["editable_username"];
+        }
+        knownChannels[relationID.toString()]["subs"] =  update["member_count"];
         notifyListeners();
       }else{
         failCounter++;
@@ -444,7 +474,7 @@ class tgProvider with ChangeNotifier {
   retreiveFullRelatedChannelInfo (id) async {
     bool gotChat = false;
     int failCounter = 0;
-    tdSend(_clientId, tdApi.GetChat(chatId: id));
+    tdSend(_clientId, tdApi.GetChat(chatId: int.parse(id)));
     while (!gotChat) {
       if(failCounter > maxFailsBeforeRetry){
         print("Related Channel was not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
@@ -456,17 +486,17 @@ class tgProvider with ChangeNotifier {
       printPrettyJson(update);
       if(update["@type"] == "chat"){
         gotChat = true;
-        if(!knownChannels.containsKey(update["id"])){
-          knownChannels[update["id"]] = {};
+        if(!knownChannels.containsKey(update["id"].toString())){
+          knownChannels[update["id"].toString()] = {};
         }
-        knownChannels[update["id"]]["id"] = update["id"];
-        knownChannels[update["id"]]["title"] = update["title"];
-        knownChannels[update["id"]]["supergroupid"] = update["type"]["supergroup_id"];
+        knownChannels[update["id"].toString()]["id"] = update["id"];
+        knownChannels[update["id"].toString()]["title"] = update["title"];
+        knownChannels[update["id"].toString()]["supergroupid"] = update["type"]["supergroup_id"];
         if(update["photo"]==null){
-          knownChannels[update["id"]]["picfile"] = "NOPIC";
+          knownChannels[update["id"].toString()]["picfile"] = "NOPIC";
         }else{
           await getPic(update["photo"]["big"]["id"]).then((file){
-            knownChannels[update["id"]]["picfile"] = file;
+            knownChannels[update["id"].toString()]["picfile"] = file;
           });
         }
         await getRelatedUsernameAndSubs(update["type"]["supergroup_id"], update["id"]);
@@ -481,7 +511,7 @@ class tgProvider with ChangeNotifier {
     tdSend(_clientId, tdApi.GetChat(chatId: id));
     bool gotChat = false;
     while (!gotChat) {
-      var update = (await tdReceive(1)?.toJson())!;
+      var update = await tdReceive(1)?.toJson()??{};
       print("GetChat:");
       printPrettyJson(update);
       if(update["@type"] == "chat"){
@@ -496,14 +526,14 @@ class tgProvider with ChangeNotifier {
     }
   }
 
-  updateIndexedChannels (String channelID, Map channelData) async {
+  updateIndexedChannels (channelID, Map channelData) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    addedIndexes[channelID] = channelData;
+    addedIndexes[channelID.toString()] = channelData;
     prefs.setString("addedIndexes", jsonEncode(addedIndexes));
   }
-  deleteIndexedChannel (String channelID) async {
+  deleteIndexedChannel (channelID) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    addedIndexes.remove(channelID);
+    addedIndexes.remove(channelID.toString());
     prefs.setString("addedIndexes", jsonEncode(addedIndexes));
     filterIndexedChannels();
   }
@@ -511,6 +541,9 @@ class tgProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(prefs.containsKey("addedIndexes")){
       addedIndexes = await jsonDecode(prefs.getString("addedIndexes")??"{}");
+    }
+    if(prefs.containsKey("knownChannels")){
+      knownChannels = await jsonDecode(prefs.getString("knownChannels")??"{}");
     }
     filterIndexedChannels();
   }
@@ -577,8 +610,6 @@ class tgProvider with ChangeNotifier {
   }
 
   handleLoggedIn() async {
-    getIndexing();
-    resolveRelations();
     doReadUpdates = false;
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;
@@ -591,6 +622,10 @@ class tgProvider with ChangeNotifier {
         });
         notifyListeners();
         gotUser = true;
+
+        getIndexing();
+        resolveRelations();
+        autoSave();
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -603,7 +638,6 @@ class tgProvider with ChangeNotifier {
     _clientId = tdCreate();
     isLoggedIn = await prefs.getBool('LoggedIn') ?? false;
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
-    // loginInfo = "${updateRaw?.toJson().toString()}\n$loginInfo";
     var update = updateRaw?.toJson().cast<dynamic, dynamic>();
     if(!(update == null)){
       notifyListeners();

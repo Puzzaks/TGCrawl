@@ -66,5 +66,6 @@
   "no_relations_title": "No relations found",
   "no_relations_desc": "Continue to index to discover them",
   "no_messages_title": "No analyzed messages yet",
-  "no_messages_desc": "Start indexing to get analysis"
+  "no_messages_desc": "Start indexing to get analysis",
+  "saving": "Autosaving"
 }

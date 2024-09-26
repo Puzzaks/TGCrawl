@@ -1427,6 +1427,8 @@ class IndexPageState extends State<IndexPage> {
                           ),
                           child: InkWell(
                             onTap: (){
+                              provider.isIndexing = false;
+                              provider.saveAll();
                               Navigator.pop(context);
                             },
                             child: Padding(
@@ -1468,6 +1470,7 @@ class IndexPageState extends State<IndexPage> {
                             onTap: (){
                               provider.isIndexing = false;
                               provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
+                              provider.saveAll();
                               Navigator.pop(context);
                             },
                             child: Padding(
@@ -1782,7 +1785,7 @@ class IndexPageState extends State<IndexPage> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: provider.currentChannel["relations"].keys.toList().reversed.map((relation) {
-                          if(provider.knownChannels.containsKey(relation)){
+                          if(provider.knownChannels.containsKey(relation.toString())){
                             return Padding(
                               padding: EdgeInsets.symmetric(horizontal: 5),
                               child: Container(
@@ -1800,13 +1803,13 @@ class IndexPageState extends State<IndexPage> {
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(10.0),
-                                          child: (provider.knownChannels[relation]["picfile"] == "NOPIC" || !provider.knownChannels[relation].containsKey("picfile")) ? Container(
+                                          child: (provider.knownChannels[relation.toString()]["picfile"] == "NOPIC" || !provider.knownChannels[relation.toString()].containsKey("picfile")) ? Container(
                                             color: Theme.of(context).colorScheme.primaryContainer,
                                             width: 60,
                                             height: 60,
                                             child: Center(
                                               child: Text(
-                                                provider.knownChannels[relation]["title"][0],
+                                                provider.knownChannels[relation.toString()]["title"][0],
                                                 style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 24
@@ -1814,7 +1817,7 @@ class IndexPageState extends State<IndexPage> {
                                               ),
                                             ),
                                           ) : Image.file(
-                                            File(provider.knownChannels[relation]["picfile"]),
+                                            File(provider.knownChannels[relation.toString()]["picfile"]),
                                             width: 60,
                                             height: 60,
                                           ),
@@ -1828,7 +1831,7 @@ class IndexPageState extends State<IndexPage> {
                                               mainAxisAlignment: MainAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  provider.knownChannels[relation]["title"],
+                                                  provider.knownChannels[relation.toString()]["title"],
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                   style: TextStyle(
@@ -1837,7 +1840,7 @@ class IndexPageState extends State<IndexPage> {
                                                   ),
                                                 ),
                                                 Text(
-                                                    "${provider.currentChannel["relations"][relation]["reposts"]} reposts",
+                                                    "${provider.currentChannel["relations"][relation.toString()]["reposts"]} reposts",
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     style: TextStyle(
@@ -2140,8 +2143,10 @@ class IndexesPageState extends State<IndexesPage> {
                               ),
                               child: InkWell(
                                 onTap: (){
-                                  provider.currentChannel = channel;
-                                  provider.retreiveFullChannelInfo(provider.currentChannel["id"]);
+                                  print(channel);
+                                  printPrettyJson(provider.addedIndexes);
+                                  provider.currentChannel = provider.addedIndexes[channel["id"].toString()];
+                                  provider.retreiveFullChannelInfo(channel["id"]);
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
@@ -2175,7 +2180,7 @@ class IndexesPageState extends State<IndexesPage> {
                                       Container(
                                         width: scaffoldWidth - 88,
                                         child: Padding(
-                                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                          padding: EdgeInsets.only(top:0,left: 15,right: 5,bottom: 5),
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             mainAxisAlignment: MainAxisAlignment.start,
@@ -2194,9 +2199,17 @@ class IndexesPageState extends State<IndexesPage> {
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                   style: TextStyle(
+                                                    height: 0.9,
                                                       fontSize: 16
                                                   )
                                               ),
+                                              channel.containsKey("donepercent")?Padding(
+                                                padding: EdgeInsets.only(top:10),
+                                                child: LinearProgressIndicator(
+                                                  value: channel.containsKey("donepercent")?channel["donepercent"] / 100:0,
+                                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                                ),
+                                              ):Container()
                                             ],
                                           ),
                                         ),
