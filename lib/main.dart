@@ -4,6 +4,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tgcrawl/tgback.dart';
@@ -1307,32 +1308,52 @@ class NewIndexPageState extends State<NewIndexPage> {
                                 children: [
                                   provider.candidateChannel.isEmpty?Container():ClipRRect(
                                     borderRadius: BorderRadius.circular(10.0),
-                                    child: Image.file(
+                                    child: provider.candidateChannel["picfile"] == "NOPIC" ? Container(
+                                      color: Theme.of(context).colorScheme.primaryContainer,
+                                      width: 60,
+                                      height: 60,
+                                      child: Center(
+                                        child: Text(
+                                          provider.candidateChannel["title"][0],
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 24
+                                          ),
+                                        ),
+                                      ),
+                                    ) : Image.file(
                                       File(provider.candidateChannel["picfile"]),
                                       width: 60,
                                       height: 60,
                                     ),
                                   ),
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          provider.candidateChannel.isEmpty?"":provider.candidateChannel["title"],
-                                          style: TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.bold
-                                          ),
-                                        ),
-                                        Text(
-                                            provider.candidateChannel.isEmpty?"":"${provider.dict("id")} ${provider.candidateChannel["id"]}",
+                                  Container(
+                                    width: scaffoldWidth - 88,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            provider.candidateChannel.isEmpty?"":provider.candidateChannel["title"],
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                                fontSize: 16
-                                            )
-                                        ),
-                                      ],
+                                                fontSize: 19,
+                                                fontWeight: FontWeight.bold
+                                            ),
+                                          ),
+                                          Text(
+                                              provider.candidateChannel.isEmpty?"":"@${provider.candidateChannel["username"]}",
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 16
+                                              )
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   )
                                 ],
@@ -1435,7 +1456,34 @@ class IndexPageState extends State<IndexPage> {
                                   ),
                                 ),
                               ),
-                            ))
+                            )),
+                        Card(
+                          color: Theme.of(context).colorScheme.errorContainer,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: InkWell(
+                            onTap: (){
+                              provider.isIndexing = false;
+                              provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.delete_rounded,
+                                    size: 27,
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
                       ],
                     ),
                   ),
@@ -1449,32 +1497,55 @@ class IndexPageState extends State<IndexPage> {
                             children: [
                               provider.currentChannel.isEmpty?Container():ClipRRect(
                                 borderRadius: BorderRadius.circular(10.0),
-                                child: Image.file(
-                                  File(provider.currentChannel["picfile"]),
-                                  width: 60,
-                                  height: 60,
+                                child: provider.currentChannel.isEmpty?Container():ClipRRect(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  child: provider.currentChannel["picfile"] == "NOPIC" ? Container(
+                                    color: Theme.of(context).colorScheme.primaryContainer,
+                                    width: 60,
+                                    height: 60,
+                                    child: Center(
+                                        child: Text(
+                                          provider.currentChannel["title"][0],
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24
+                                          ),
+                                        ),
+                                    ),
+                                  ) : Image.file(
+                                    File(provider.currentChannel["picfile"]),
+                                    width: 60,
+                                    height: 60,
+                                  ),
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      provider.currentChannel.isEmpty?"":provider.currentChannel["title"],
-                                      style: TextStyle(
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.bold
-                                      ),
-                                    ),
-                                    Text(
-                                        provider.currentChannel.isEmpty?"":"${provider.dict("id")} ${provider.currentChannel["id"]}",
+                              Container(
+                                width: scaffoldWidth - 88,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        provider.currentChannel.isEmpty?"":provider.currentChannel["title"],
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                            fontSize: 16
-                                        )
-                                    ),
-                                  ],
+                                            fontSize: 19,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                      ),
+                                      Text(
+                                          provider.currentChannel.isEmpty?"":"@${provider.currentChannel["username"]}",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               )
                             ],
@@ -1486,31 +1557,33 @@ class IndexPageState extends State<IndexPage> {
                       padding: EdgeInsets.symmetric(horizontal:5),
                       child: Row(
                           children: [
-                            Expanded(child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              elevation: 5,
-                              child: Padding(padding: EdgeInsets.all(15),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      provider.dict("subscribers"),
-                                      style: TextStyle(
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.bold
-                                      ),
+                            Expanded(
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          provider.dict("subscribers"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.currentChannel.containsKey("subs")?provider.currentChannel["subs"].toString():"0",
+                                            style: TextStyle(
+                                                fontFamily: provider.currentChannel.containsKey("subs")?null:"Flow",
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                        provider.currentChannel.containsKey("subs")?provider.currentChannel["subs"].toString():"0",
-                                        style: TextStyle(
-                                            fontFamily: provider.currentChannel.containsKey("subs")?null:"Flow",
-                                            fontSize: 16
-                                        )
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )),
+                                  ),
+                                )
+                            ),
                             Expanded(child: Card(
                               color: Theme.of(context).colorScheme.onPrimary,
                               elevation: 5,
@@ -1552,7 +1625,6 @@ class IndexPageState extends State<IndexPage> {
                           onTap: (){
                             setState(() {
                               provider.isIndexing = !provider.isIndexing;
-                              provider.getIndexing();
                             });
                           },
                           child: Padding(
@@ -1576,27 +1648,14 @@ class IndexPageState extends State<IndexPage> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              provider.dict("indexed_title"),
+                                              provider.isIndexing?provider.dict(provider.indexingStatus):provider.dict("indexed_title"),
                                               style: TextStyle(
                                                   fontSize: 19,
                                                   fontWeight: FontWeight.bold
                                               ),
                                             ),
                                             Text(
-                                                "${
-                                                    (
-                                                    (
-                                                    (
-                                                    provider.currentChannel.containsKey("lastindexedid")
-                                                        ? provider.currentChannel["lastindexedid"]
-                                                        : 0
-                                                )/(
-                                                        provider.currentChannel.containsKey("lastmsgid")
-                                                            ? int.parse(provider.currentChannel["lastmsgid"])
-                                                            : 0
-                                                    )
-                                                ) * 100
-                                                    ).toStringAsFixed(2)}%",
+                                                provider.currentChannel.containsKey("donepercent")?"${provider.currentChannel["donepercent"].toStringAsFixed(2)}%":"0%",
                                                 style: TextStyle(
                                                     fontSize: 16
                                                 )
@@ -1605,7 +1664,7 @@ class IndexPageState extends State<IndexPage> {
                                         ),
                                         SizedBox(height: 10,),
                                         LinearProgressIndicator(
-                                          value: (provider.currentChannel.containsKey("lastindexedid")?provider.currentChannel["lastindexedid"]:0)/(provider.currentChannel.containsKey("lastmsgid")?int.parse(provider.currentChannel["lastmsgid"]):0),
+                                          value: provider.currentChannel.containsKey("donepercent")?provider.currentChannel["donepercent"] / 100:0,
                                           borderRadius: const BorderRadius.all(Radius.circular(3)),
                                         )
                                       ],
@@ -1627,14 +1686,299 @@ class IndexPageState extends State<IndexPage> {
                         ),
                       )
                   ),
-                  Expanded(
+                  // Padding(
+                  //     padding: EdgeInsets.symmetric(horizontal:5),
+                  //     child: Card(
+                  //       color: Theme.of(context).colorScheme.onPrimary,
+                  //       elevation: 5,
+                  //       child: Padding(padding: EdgeInsets.symmetric(horizontal: 15,vertical: 10),
+                  //         child: Row(
+                  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //           children: [
+                  //             Column(
+                  //               crossAxisAlignment: CrossAxisAlignment.start,
+                  //               children: [
+                  //                 Text(
+                  //                   provider.dict("clear_index_title"),
+                  //                   style: TextStyle(
+                  //                       fontSize: 19,
+                  //                       fontWeight: FontWeight.bold
+                  //                   ),
+                  //                 ),
+                  //                 Text(
+                  //                     provider.dict("clear_index_desc"),
+                  //                     style: TextStyle(
+                  //                         fontSize: 16
+                  //                     )
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //             FilledButton(
+                  //                 onPressed: (){
+                  //                   showDialog<String>(
+                  //                     context: context,
+                  //                     builder: (BuildContext context) => AlertDialog(
+                  //                       content: Column(
+                  //                         crossAxisAlignment: CrossAxisAlignment.start,
+                  //                         mainAxisSize: MainAxisSize.min,
+                  //                         children: [
+                  //                           Text(provider.dict("clear_index_confirm").replaceAll("(PERCENT)","${
+                  //                           (
+                  //                               (
+                  //                                   (
+                  //                                       provider.currentChannel.containsKey("lastindexedid")
+                  //                                           ? provider.currentChannel["lastindexedid"]
+                  //                                           : 0
+                  //                                   )/(
+                  //                                       provider.currentChannel.containsKey("lastmsgid")
+                  //                                           ? int.parse(provider.currentChannel["lastmsgid"])
+                  //                                           : 0
+                  //                                   )
+                  //                               ) * 100
+                  //                           ).toStringAsFixed(2)}")
+                  //                           )
+                  //                         ],
+                  //                       ),
+                  //                       actions: [
+                  //                         Row(
+                  //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //                           children: [
+                  //                             FilledButton(
+                  //                                 onPressed: () {
+                  //                                   Navigator.pop(context);
+                  //                                 },
+                  //                                 style: ButtonStyle(backgroundColor: MaterialStateColor.resolveWith((states) => Theme.of(context).colorScheme.error)),
+                  //                                 child: Text(
+                  //                                   provider.dict("cancel"),
+                  //                                   style: TextStyle(color: Theme.of(context).colorScheme.background),
+                  //                                 )
+                  //                             ),
+                  //                             FilledButton(
+                  //                                 onPressed: () async {
+                  //                                   Navigator.pop(context);
+                  //                                 },
+                  //                                 child: Text(provider.dict("clear_index_action"))
+                  //                             ),
+                  //                           ],
+                  //                         )
+                  //                       ],
+                  //                     ),
+                  //                   );
+                  //                 },
+                  //                 child: Text(
+                  //                     provider.dict("clear_index_action"),
+                  //                     style: TextStyle(
+                  //                         fontSize: 16
+                  //                     )
+                  //                 )
+                  //             )
+                  //           ],
+                  //         ),
+                  //       ),
+                  //     )
+                  // ),
+                  provider.currentChannel.containsKey("relations")
+                      ? Expanded(
                     child: SingleChildScrollView(
                       child: Column(
-                        children: provider.indexedMessages.map((message) {
-                          return Text(message["forward_info"] == null?"Message ID ${message["id"].toString()}":"Message ID ${message["id"].toString()}, REPOST");
+                        children: provider.currentChannel["relations"].keys.toList().reversed.map((relation) {
+                          if(provider.knownChannels.containsKey(relation)){
+                            return Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 5),
+                              child: Container(
+                                width: scaffoldWidth,
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          child: (provider.knownChannels[relation]["picfile"] == "NOPIC" || !provider.knownChannels[relation].containsKey("picfile")) ? Container(
+                                            color: Theme.of(context).colorScheme.primaryContainer,
+                                            width: 60,
+                                            height: 60,
+                                            child: Center(
+                                              child: Text(
+                                                provider.knownChannels[relation]["title"][0],
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 24
+                                                ),
+                                              ),
+                                            ),
+                                          ) : Image.file(
+                                            File(provider.knownChannels[relation]["picfile"]),
+                                            width: 60,
+                                            height: 60,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: scaffoldWidth - 88,
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  provider.knownChannels[relation]["title"],
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Text(
+                                                    "${provider.currentChannel["relations"][relation]["reposts"]} reposts",
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontSize: 16
+                                                    )
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),);
+                          }
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            child: Container(
+                              width: scaffoldWidth,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                elevation: 5,
+                                clipBehavior: Clip.hardEdge,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(5),
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10.0),
+                                        child: Container(
+                                          color: Theme.of(context).colorScheme.primaryContainer,
+                                          width: 60,
+                                          height: 60,
+                                          child: Center(
+                                            child: Icon(Icons.downloading_rounded,
+                                            size: 24
+                                              ,),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Loading...",
+                                              style: TextStyle(
+                                                  fontFamily: "Flow",
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                            Text(
+                                                "${provider.currentChannel["relations"][relation]["reposts"]} reposts",
+                                                style: TextStyle(
+                                                    fontSize: 16
+                                                )
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),);
+                          return Text("${provider.knownChannels.containsKey(relation)?"${provider.knownChannels[relation]["title"]}":"Unknown"} - ${provider.currentChannel["relations"][relation]["reposts"]} reposts");
                         }).toList().cast<Widget>(),
                       ),
                     ),
+                  )
+                      : provider.currentChannel.containsKey("lastmsgid")
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal:5),
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.dict("no_relations_title"),
+                                    style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  Text(
+                                      provider.dict("no_relations_desc"),
+                                      style: TextStyle(
+                                          fontSize: 16
+                                      )
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                  )
+                  : Padding(
+                      padding: EdgeInsets.symmetric(horizontal:5),
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.dict("no_messages_title"),
+                                    style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  Text(
+                                      provider.dict("no_messages_desc"),
+                                      style: TextStyle(
+                                          fontSize: 16
+                                      )
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                   )
                 ],
               ),
@@ -1733,7 +2077,54 @@ class IndexesPageState extends State<IndexesPage> {
                       ],
                     ),
                   ),
-                  SingleChildScrollView(
+                  provider.displayIndexes.isEmpty
+                      ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal:5),
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    provider.dict("no_indexed_title"),
+                                    style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                  Text(
+                                      provider.dict("no_indexed_desc"),
+                                      style: TextStyle(
+                                          fontSize: 16
+                                      )
+                                  ),
+                                ],
+                              ),
+                              FilledButton(
+                                  onPressed: (){
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
+                                    );
+                                  },
+                                  child: Text(
+                                      provider.dict("add"),
+                                      style: TextStyle(
+                                          fontSize: 16
+                                      )
+                                  )
+                              )
+                            ],
+                          ),
+                        ),
+                      )
+                  )
+                      : SingleChildScrollView(
                     child: Column(
                       children: provider.displayIndexes.map((channel) {
                         return Padding(
@@ -1762,32 +2153,52 @@ class IndexesPageState extends State<IndexesPage> {
                                     children: [
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(10.0),
-                                        child: Image.file(
+                                        child: channel["picfile"] == "NOPIC" ? Container(
+                                          color: Theme.of(context).colorScheme.primaryContainer,
+                                          width: 60,
+                                          height: 60,
+                                          child: Center(
+                                            child: Text(
+                                              channel["title"][0],
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 24
+                                              ),
+                                            ),
+                                          ),
+                                        ) : Image.file(
                                           File(channel["picfile"]),
                                           width: 60,
                                           height: 60,
                                         ),
                                       ),
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              channel["title"],
-                                              style: TextStyle(
-                                                  fontSize: 19,
-                                                  fontWeight: FontWeight.bold
-                                              ),
-                                            ),
-                                            Text(
-                                                "${provider.dict("id")} ${channel["id"]}",
+                                      Container(
+                                        width: scaffoldWidth - 88,
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                channel["title"],
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                    fontSize: 16
-                                                )
-                                            ),
-                                          ],
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Text(
+                                                  "@${channel["username"]}",
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                      fontSize: 16
+                                                  )
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       )
                                     ],

@@ -51,5 +51,20 @@
   "messages": "Messages",
   "subscribers": "Subscribers",
   "indexed_title": "Indexing status",
-  "indexing_title": "Indexing"
+  "indexing_title": "Indexing",
+  "clear_index_title": "Reset indexing",
+  "clear_index_desc": "Start new index for this channel",
+  "clear_index_action": "Reset",
+  "clear_index_confirm": "Are you sure you want to reset indexing results for this channel? It is (PERCENT)% indexed.",
+  "cancel": "Cancel",
+  "no_indexed_title": "No indexed channels",
+  "no_indexed_desc": "You have to add one to begin",
+  "add": "Add",
+  "resolving_related_channel": "Resolving relation",
+  "ready_to_index": "Ready to index",
+  "reading_channel": "Analyzing messages",
+  "no_relations_title": "No relations found",
+  "no_relations_desc": "Continue to index to discover them",
+  "no_messages_title": "No analyzed messages yet",
+  "no_messages_desc": "Start indexing to get analysis"
 }

@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pretty_json/pretty_json.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tdlib/td_client.dart';
@@ -65,9 +66,13 @@ class tgProvider with ChangeNotifier {
   Map addedIndexes = {};
   List displayIndexes = [];
   Map indexedChannels = {};
-  List indexedMessages = [];
+  List unresolvedRelations = [];
+  Map knownChannels = {};
+  int maxFailsBeforeRetry = 10;
+  String indexingStatus = "ready_to_index";
 
   void init() async {
+    notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(kReleaseMode){
       getConfigOnline();
@@ -289,7 +294,7 @@ class tgProvider with ChangeNotifier {
     tdSend(_clientId, tdApi.DownloadFile(fileId: file, priority: 1, offset: 0, limit: 0, synchronous: true));
     bool gotPic = false;
     while (!gotPic) {
-      var update = (await tdReceive(1)?.toJson())!;
+      var update = await tdReceive(1)?.toJson()??{};
       if(update["@type"] == "file"){
         gotPic = true;
         return update["local"]["path"];
@@ -313,35 +318,160 @@ class tgProvider with ChangeNotifier {
     }
   }
   getIndexing() async {
-    while (isIndexing) {
-      print("indexing! ${jsonEncode(currentChannel)}");
-      tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 2, onlyLocal: false));
+    while (true) {
       bool gotNext = false;
-      while (!gotNext) {
-        var update = await tdReceive(1)?.toJson()??{};
-        print("indexed! ${jsonEncode(update)}");
-        if(update["@type"] == "messages"){
-          currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
-          currentChannel["lastindexed"] = update["messages"][1]["id"];
-          indexedMessages.insert(0, update["messages"][1]);
-          gotNext = true;
-          notifyListeners();
-          updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+      if(isIndexing && unresolvedRelations.isEmpty){
+        indexingStatus = "reading_channel";
+        notifyListeners();
+        gotNext = false;
+        tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 1, onlyLocal: false));
+        while (!gotNext) {
+          var update = await tdReceive(1)?.toJson()??{};
+          if(update["@type"] == "messages"){
+            if(update["total_count"] == 0){
+              isIndexing = false;
+              gotNext = true;
+              currentChannel["isDone"] = true;
+              currentChannel["donepercent"] = 100;
+              notifyListeners();
+            }else{
+              currentChannel["donepercent"] = (((currentChannel.containsKey("lastindexedid") ? currentChannel["lastindexedid"] : 0)/(currentChannel.containsKey("lastmsgid") ? int.parse(currentChannel["lastmsgid"]) : 0)) * 100);
+              currentChannel["isDone"] = false;
+              currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
+              currentChannel["lastindexed"] = update["messages"][0]["id"];
+              if(update["messages"][0]["forward_info"] == null){}else{
+                if(update["messages"][0]["forward_info"]["origin"]["chat_id"] == null){}else{
+                  addRelationToChannel(currentChannel["id"],update["messages"][0]["forward_info"]["origin"]["chat_id"], update["messages"][0]);
+                }
+              }
+              gotNext = true;
+              notifyListeners();
+            }
+          }
+          await Future.delayed(Duration(milliseconds: 100));
         }
+        await Future.delayed(Duration(milliseconds: 100));
+      }else{
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+    }
+  }
+  resolveRelations() async {
+    while(true){
+      if(unresolvedRelations.isNotEmpty){
+        print("Channels to resolve: ${unresolvedRelations.toString()}");
+        indexingStatus = "resolving_related_channel";
+        notifyListeners();
+        if(knownChannels.containsKey(unresolvedRelations[0])){
+          if(knownChannels[unresolvedRelations[0]].containsKey("title") && knownChannels[unresolvedRelations[0]].containsKey("id")){
+            unresolvedRelations.removeAt(0);
+          }
+        }else{
+          await retreiveFullRelatedChannelInfo(unresolvedRelations[0]);
+          unresolvedRelations.removeAt(0);
+        }
+      }else{
         await Future.delayed(Duration(milliseconds: 100));
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
   }
-  getSubsCount(superID) async {
-    tdSend(_clientId, tdApi.GetSupergroupFullInfo(supergroupId: superID));
+
+  addRelationToChannel(channelID, relatedChannelID, message) async {
+    if(!currentChannel.containsKey("reposts")) {
+      currentChannel["reposts"] = 1;
+    }else{
+      currentChannel["reposts"] ++;
+    }
+    if(!currentChannel.containsKey("relations")) {
+      currentChannel["relations"] = {};
+    }
+    if(currentChannel["relations"].containsKey(relatedChannelID)){
+      currentChannel["relations"][relatedChannelID]["firstrepost"] = message["date"];
+      currentChannel["relations"][relatedChannelID]["reposts"] ++;
+    }else{
+      currentChannel["relations"][relatedChannelID] = {};
+      currentChannel["relations"][relatedChannelID]["lastrepost"] = message["date"];
+      currentChannel["relations"][relatedChannelID]["reposts"] = 1;
+      if(!knownChannels.containsKey(message["forward_info"]["origin"]["chat_id"])) {
+        unresolvedRelations.add(message["forward_info"]["origin"]["chat_id"]);
+      }
+    }
+    await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+  }
+
+  getUsernameAndSubs(superID) async {
+    tdSend(_clientId, tdApi.GetSupergroup(supergroupId: superID));
     bool gotMsgs = false;
     while (!gotMsgs) {
       var update = await tdReceive(1)?.toJson()??{};
-      if(update["@type"] == "supergroupFullInfo"){
+      print("GetSupergroup:");
+      printPrettyJson(update);
+      if(update["@type"] == "supergroup"){
         gotMsgs = true;
+        currentChannel["username"] = update["usernames"]["editable_username"];
         currentChannel["subs"] =  update["member_count"];
         notifyListeners();
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+  getRelatedUsernameAndSubs(superID, relationID) async {
+    tdSend(_clientId, tdApi.GetSupergroup(supergroupId: superID));
+    int failCounter = 0;
+    bool gotMsgs = false;
+    while (!gotMsgs) {
+      if(failCounter > maxFailsBeforeRetry){
+        print("Related Username and Subs were not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
+        gotMsgs = true;
+        unresolvedRelations.add(relationID);
+      }
+      var update = await tdReceive(1)?.toJson()??{};
+      print("GetRelatedSupergroup: ${superID}");
+      printPrettyJson(update);
+      if(update["@type"] == "supergroup"){
+        gotMsgs = true;
+        knownChannels[relationID]["username"] = update["usernames"]["editable_username"];
+        knownChannels[relationID]["subs"] =  update["member_count"];
+        notifyListeners();
+      }else{
+        failCounter++;
+      }
+      await Future.delayed(Duration(milliseconds: 100));
+    }
+  }
+
+  retreiveFullRelatedChannelInfo (id) async {
+    bool gotChat = false;
+    int failCounter = 0;
+    tdSend(_clientId, tdApi.GetChat(chatId: id));
+    while (!gotChat) {
+      if(failCounter > maxFailsBeforeRetry){
+        print("Related Channel was not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
+        unresolvedRelations.add(id);
+        gotChat = true;
+      }
+      var update = await tdReceive(1)?.toJson()??{};
+      print("GetRelatedChat ($id):");
+      printPrettyJson(update);
+      if(update["@type"] == "chat"){
+        gotChat = true;
+        if(!knownChannels.containsKey(update["id"])){
+          knownChannels[update["id"]] = {};
+        }
+        knownChannels[update["id"]]["id"] = update["id"];
+        knownChannels[update["id"]]["title"] = update["title"];
+        knownChannels[update["id"]]["supergroupid"] = update["type"]["supergroup_id"];
+        if(update["photo"]==null){
+          knownChannels[update["id"]]["picfile"] = "NOPIC";
+        }else{
+          await getPic(update["photo"]["big"]["id"]).then((file){
+            knownChannels[update["id"]]["picfile"] = file;
+          });
+        }
+        await getRelatedUsernameAndSubs(update["type"]["supergroup_id"], update["id"]);
+      }else{
+        failCounter ++;
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -352,11 +482,15 @@ class tgProvider with ChangeNotifier {
     bool gotChat = false;
     while (!gotChat) {
       var update = (await tdReceive(1)?.toJson())!;
+      print("GetChat:");
+      printPrettyJson(update);
       if(update["@type"] == "chat"){
+        currentChannel["supergroupid"] = update["type"]["supergroup_id"];
         gotChat = true;
         await getLastMessage(id, update["last_message"]["id"]);
-        await getSubsCount(update["type"]["supergroup_id"]);
+        await getUsernameAndSubs(update["type"]["supergroup_id"]);
         updateIndexedChannels(id.toString(), currentChannel);
+        notifyListeners();
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -366,6 +500,12 @@ class tgProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     addedIndexes[channelID] = channelData;
     prefs.setString("addedIndexes", jsonEncode(addedIndexes));
+  }
+  deleteIndexedChannel (String channelID) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    addedIndexes.remove(channelID);
+    prefs.setString("addedIndexes", jsonEncode(addedIndexes));
+    filterIndexedChannels();
   }
   readIndexedChannels () async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -417,10 +557,15 @@ class tgProvider with ChangeNotifier {
           if(update["type"]["is_channel"]){
             candidateChannel["title"] = update["title"];
             candidateChannel["id"] = update["id"];
+            candidateChannel["username"] = channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim();
             print("getPic!Prerequisite: $candidateChannel");
-            await getPic(update["photo"]["big"]["id"]).then((file){
-              candidateChannel["picfile"] = file;
-            });
+            if(update["photo"] == null){
+              candidateChannel["picfile"] = "NOPIC";
+            }else{
+              await getPic(update["photo"]["big"]["id"]).then((file){
+                candidateChannel["picfile"] = file;
+              });
+            }
             gotChannel = true;
             channelNotFound = false;
             notifyListeners();
@@ -433,6 +578,7 @@ class tgProvider with ChangeNotifier {
 
   handleLoggedIn() async {
     getIndexing();
+    resolveRelations();
     doReadUpdates = false;
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;

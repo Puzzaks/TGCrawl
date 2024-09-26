@@ -360,6 +360,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  pretty_json:
+    dependency: "direct main"
+    description:
+      name: pretty_json
+      sha256: f1e9395d2c4c2bafacbcac0aedc77dbc25a29f80b690438e5f0cb5be8d8626c2
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   provider:
     dependency: "direct main"
     description:
