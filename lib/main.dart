@@ -716,7 +716,25 @@ class tgLoginState extends State<tgLogin> {
                 firstChild: Container(
                   height: scaffoldHeight,
                   width: scaffoldWidth,
-                  child: HomePage(),
+                  child: Container(
+                    height: scaffoldHeight,
+                    width: scaffoldWidth,
+                    child: AnimatedCrossFade(
+                      alignment: Alignment.center,
+                      duration: Duration(milliseconds: 500),
+                      firstChild: Container(
+                        height: scaffoldHeight,
+                        width: scaffoldWidth,
+                        child: appLoadingStage(),
+                      ),
+                      secondChild: Container(
+                        height: scaffoldHeight,
+                        width: scaffoldWidth,
+                        child: HomePage(),
+                      ),
+                      crossFadeState: provider.userPic == ""? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    ),
+                  ),
                 ),
                 secondChild: Container(
                   height: scaffoldHeight,
@@ -802,97 +820,61 @@ class HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(height: 5,), // shit code
-                  AnimatedCrossFade(
-                    alignment: Alignment.center,
-                    duration: Duration(milliseconds: 500),
-                    firstChild: Padding(padding: EdgeInsets.symmetric(horizontal: 5),
-                      child: Container(
-                        width: scaffoldWidth,
-                        height: 72,
-                        child: Card(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          elevation: 5,
-                          child: Padding(padding: EdgeInsets.all(5),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.downloading_rounded,
-                                  size: 50,
-                                ),
-                                SizedBox(width: 15,),
-                                Container(
-                                  height: 64,
-                                  width: scaffoldWidth - 103,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        provider.dict("user_loading_title"),
-                                        style: TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold
-                                        ),
+                  Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(5),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10.0),
+                                child: provider.userPic == "NOPIC" ? Container(
+                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                  width: 60,
+                                  height: 60,
+                                  child: Center(
+                                    child: Text(
+                                      provider.userData["first_name"].toString()[0],
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 24
                                       ),
-                                      Text(
-                                          provider.dict("user_loading_desc"),
-                                          style: TextStyle(
-                                              fontSize: 16
-                                          )
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                )
-                              ],
-                            ),
+                                ) : Image.file(
+                                  File(provider.userPic),
+                                  width: 60,
+                                  height: 60,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "${provider.userData["first_name"].toString()}${provider.userData["last_name"].toString() == ""?"":" "}${provider.userData["last_name"].toString()}",
+                                      style: TextStyle(
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                    Text(
+                                        provider.userData.containsKey("usernames")?"@${provider.userData["usernames"]["editable_username"]}":provider.dict("no_username"),
+                                        style: TextStyle(
+                                            fontSize: 16
+                                        )
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
                           ),
                         ),
-                      ),), // number
-                    secondChild: Padding(padding: EdgeInsets.symmetric(horizontal: 5),
-                      child: Container(
-                        width: scaffoldWidth,
-                        child: Card(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          elevation: 5,
-                          child: Padding(padding: EdgeInsets.all(5),
-                            child: Row(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                  child: provider.userPic == "" ? Container() : Image.file(
-                                    File(provider.userPic),
-                                    width: 60,
-                                    height: 60,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        provider.dict("ready"),
-                                        style: TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      Text(
-                                          "${provider.dict("logged_as")}${provider.userData["first_name"].toString()}${provider.userData["last_name"].toString() == ""?"":" "}${provider.userData["last_name"].toString()}",
-                                          style: TextStyle(
-                                              fontSize: 16
-                                          )
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),),
-                    crossFadeState: provider.userPic == "" ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                      )
                   ), // user info
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 5),
@@ -1129,7 +1111,10 @@ class HomePageState extends State<HomePage> {
                       ),
                       child: InkWell(
                         onTap: () async {
-
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(fullscreenDialog: true, builder: (context) => SettingsPage()),
+                          );
                         },
                         child: Padding(
                           padding: EdgeInsets.all(15),
@@ -1152,6 +1137,92 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                   )
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsPage extends StatefulWidget {
+
+  @override
+  SettingsPageState createState() => SettingsPageState();
+}
+
+class SettingsPageState extends State<SettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(),
+                          Icon(
+                            Icons.downloading_rounded,
+                            size: scaffoldHeight / 5,
+                          ),
+                          Container()
+                        ]
+                    ),
+                  ),
+                  Padding(padding: EdgeInsets.all(5),
+                    child: Container(
+                      width: scaffoldWidth,
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                provider.dict("user_loading_title"),
+                                style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              Text(
+                                  provider.dict("user_loading_desc"),
+                                  style: TextStyle(
+                                      fontSize: 16
+                                  )
+                              ),
+                              SizedBox(height: 10,),
+                              LinearProgressIndicator(
+                                borderRadius: const BorderRadius.all(Radius.circular(3)),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),),
                 ],
               ),
             );
@@ -1446,47 +1517,116 @@ class IndexPageState extends State<IndexPage> {
                           ),
                         ),
                         Expanded(
-                            child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              elevation: 5,
-                              child: Padding(padding: EdgeInsets.all(15),
-                                child: Text(
-                                  provider.dict("channel_view"),
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold
+                          child: AnimatedCrossFade(
+                            alignment: Alignment.center,
+                            duration: Duration(milliseconds: 500),
+                            firstChild: Row(
+                              children: [
+                                Expanded(
+                                  child: Card(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    elevation: 5,
+                                    clipBehavior: Clip.hardEdge,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: InkWell(
+                                      onTap: (){
+                                        setState(() {
+                                          provider.confirmDelete = false;
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: EdgeInsets.all(15),
+                                        child: Text(
+                                          provider.dict("cancel"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )),
-                        Card(
-                          color: Theme.of(context).colorScheme.errorContainer,
-                          elevation: 5,
-                          clipBehavior: Clip.hardEdge,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: InkWell(
-                            onTap: (){
-                              provider.isIndexing = false;
-                              provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
-                              provider.saveAll();
-                              Navigator.pop(context);
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.all(15),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.delete_rounded,
-                                    size: 27,
-                                  )
-                                ],
-                              ),
+                                Expanded(
+                                  child: Card(
+                                    color: Theme.of(context).colorScheme.errorContainer,
+                                    elevation: 5,
+                                    clipBehavior: Clip.hardEdge,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: InkWell(
+                                      onTap: (){
+                                        provider.isIndexing = false;
+                                        provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
+                                        provider.saveAll();
+                                        Navigator.pop(context);
+                                      },
+                                      child: Padding(
+                                        padding: EdgeInsets.all(15),
+                                        child: Text(
+                                          provider.dict("confirm"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                            secondChild: Row(
+                              children: [
+                                Expanded(
+                                    child: Card(
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                      elevation: 5,
+                                      child: Padding(padding: EdgeInsets.all(15),
+                                        child: Text(
+                                          provider.dict("channel_view"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                      ),
+                                    )),
+                                Card(
+                                  color: Theme.of(context).colorScheme.errorContainer,
+                                  elevation: 5,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: InkWell(
+                                    onTap: (){
+                                      setState(() {
+                                        provider.confirmDelete = true;
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.all(15),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.delete_rounded,
+                                            size: 27,
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                            crossFadeState: provider.confirmDelete ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -2147,6 +2287,7 @@ class IndexesPageState extends State<IndexesPage> {
                                   printPrettyJson(provider.addedIndexes);
                                   provider.currentChannel = provider.addedIndexes[channel["id"].toString()];
                                   provider.retreiveFullChannelInfo(channel["id"]);
+                                  provider.confirmDelete = false;
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
@@ -2277,38 +2418,124 @@ class loginLoadingStageState extends State<loginLoadingStage> {
                     ),
                   ),
                   Padding(padding: EdgeInsets.all(5),
-                  child: Container(
-                    width: scaffoldWidth,
-                    child: Card(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      elevation: 5,
-                      child: Padding(padding: EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text(
-                              provider.dict("loading_title"),
-                              style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold
-                              ),
-                            ),
-                            Text(
-                                provider.dict("loading_desc"),
+                    child: Container(
+                      width: scaffoldWidth,
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                provider.dict("loading_title"),
                                 style: TextStyle(
-                                    fontSize: 16
-                                )
-                            ),
-                            SizedBox(height: 10,),
-                            LinearProgressIndicator(
-                              borderRadius: const BorderRadius.all(Radius.circular(3)),
-                            )
-                          ],
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              Text(
+                                  provider.dict("loading_desc"),
+                                  style: TextStyle(
+                                      fontSize: 16
+                                  )
+                              ),
+                              SizedBox(height: 10,),
+                              LinearProgressIndicator(
+                                borderRadius: const BorderRadius.all(Radius.circular(3)),
+                              )
+                            ],
+                          ),
                         ),
                       ),
+                    ),),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class appLoadingStage extends StatefulWidget {
+
+  @override
+  appLoadingStageState createState() => appLoadingStageState();
+}
+
+class appLoadingStageState extends State<appLoadingStage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+  late BuildContext context;
+  late double scaffoldWidth;
+  late double scaffoldHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Consumer<tgProvider>(
+          builder: (context, provider, child) {
+            context = provider.localContext;
+            scaffoldWidth = provider.localWidth;
+            scaffoldHeight = provider.localHeight;
+            return Container(
+              height: scaffoldHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(),
+                          Icon(
+                            Icons.downloading_rounded,
+                            size: scaffoldHeight / 5,
+                          ),
+                          Container()
+                        ]
                     ),
-                  ),),
+                  ),
+                  Padding(padding: EdgeInsets.all(5),
+                    child: Container(
+                      width: scaffoldWidth,
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        elevation: 5,
+                        child: Padding(padding: EdgeInsets.all(15),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Text(
+                                provider.dict("user_loading_title"),
+                                style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              Text(
+                                  provider.dict("user_loading_desc"),
+                                  style: TextStyle(
+                                      fontSize: 16
+                                  )
+                              ),
+                              SizedBox(height: 10,),
+                              LinearProgressIndicator(
+                                borderRadius: const BorderRadius.all(Radius.circular(3)),
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),),
                 ],
               ),
             );

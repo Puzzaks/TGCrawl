@@ -73,6 +73,7 @@ class tgProvider with ChangeNotifier {
   int autoSaveSeconds = 15;
   DateTime nextAutoSave = DateTime.now();
   bool isAutoSaving = false;
+  bool confirmDelete = false;
 
   void init() async {
     notifyListeners();
@@ -614,12 +615,17 @@ class tgProvider with ChangeNotifier {
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;
     while (!gotUser) {
-      var update = (await tdReceive(1)?.toJson())!;
+      var update = await tdReceive(1)?.toJson()??{};
       if(update["@type"] == "user"){
         userData = update;
-        await getPic(update["profile_photo"]["big"]["id"]).then((file){
-          userPic = file;
-        });
+        printPrettyJson(userData);
+        if(update["profile_photo"] == null){
+          userPic = "NOPIC";
+        }else{
+          await getPic(update["profile_photo"]["big"]["id"]).then((file){
+            userPic = file;
+          });
+        }
         notifyListeners();
         gotUser = true;
 
@@ -632,11 +638,32 @@ class tgProvider with ChangeNotifier {
   }
 
   Future<void> launch () async {
+    if (Platform.isAndroid) {
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
+      var sdkInt = androidInfo.version.sdkInt;
+      if(sdkInt < 31){
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top, SystemUiOverlay.bottom
+        ]);
+      }else{
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top
+        ]);
+      }
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.transparent,
+        ),
+      );
+    }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     await TdPlugin.initialize(tdlibPath);
     _clientId = tdCreate();
-    isLoggedIn = await prefs.getBool('LoggedIn') ?? false;
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
     var update = updateRaw?.toJson().cast<dynamic, dynamic>();
     if(!(update == null)){
@@ -679,8 +706,7 @@ class tgProvider with ChangeNotifier {
               break;
             case "authorizationStateWaitTdlibParameters":
               loginState = 0.0;
-              status = "Connecting... (${updates.length})";
-                sendTdLibParams();
+              sendTdLibParams();
               break;
             case"authorizationStateReady":
               prefs.setBool('LoggedIn', true);
