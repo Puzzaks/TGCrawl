@@ -878,65 +878,63 @@ class HomePageState extends State<HomePage> {
                   ), // user info
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 5),
-                    child: Expanded(
-                        child: Card(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          elevation: 5,
-                          clipBehavior: Clip.hardEdge,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: InkWell(
-                            onTap: () async {
-                              provider.readIndexedChannels();
-                              provider.filterIndexedChannels();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexesPage()),
-                              );
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.all(15),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      clipBehavior: Clip.hardEdge,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: InkWell(
+                        onTap: () async {
+                          provider.readIndexedChannels();
+                          provider.filterIndexedChannels();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexesPage()),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.all(15),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        provider.dict("indexed_channels"),
-                                        style: TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      Text(
-                                          "${provider.dict("channels")} ${provider.addedIndexes.length.toString()}",
-                                          style: TextStyle(
-                                              fontSize: 16
-                                          )
-                                      ),
-                                    ],
+                                  Text(
+                                    provider.dict("indexed_channels"),
+                                    style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.bold
+                                    ),
                                   ),
-                                  FilledButton(
-                                    onPressed: (){
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
-                                      );
-                                    },
-                                    child: Text(
-                                      provider.dict("add"),
+                                  Text(
+                                      "${provider.dict("channels")} ${provider.addedIndexes.length.toString()}",
                                       style: TextStyle(
                                           fontSize: 16
-                                      ),
-                                    ),
-                                  )
+                                      )
+                                  ),
                                 ],
                               ),
-                            ),
+                              FilledButton(
+                                onPressed: (){
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
+                                  );
+                                },
+                                child: Text(
+                                  provider.dict("add"),
+                                  style: TextStyle(
+                                      fontSize: 16
+                                  ),
+                                ),
+                              )
+                            ],
                           ),
-                        )
+                        ),
+                      ),
                     ),
                   ), // indexing options
                   Padding(
