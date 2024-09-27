@@ -878,172 +878,30 @@ class HomePageState extends State<HomePage> {
                   ), // user info
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 5),
-                    child: AnimatedCrossFade(
-                      alignment: Alignment.center,
-                      duration: Duration(milliseconds: 500),
-                      firstChild: Padding(padding: EdgeInsets.all(5),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: scaffoldWidth,
-                              child: Card(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                elevation: 5,
-                                child: Padding(padding: EdgeInsets.all(15),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        provider.dict("sharing_disabled_title"),
-                                        style: TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold
-                                        ),
-                                      ),
-                                      Text(
-                                          provider.dict("sharing_disabled_desc"),
-                                          style: TextStyle(
-                                              fontSize: 16
-                                          )
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Card(
-                                      color: Theme.of(context).colorScheme.onPrimary,
-                                      elevation: 5,
-                                      clipBehavior: Clip.hardEdge,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: InkWell(
-                                        onTap: () async {
-                                          final SharedPreferences prefs = await SharedPreferences.getInstance();
-                                          prefs.setBool("crowdsource", true);
-                                          prefs.setBool("crowdsource_final", true);
-                                          setState(() {
-                                            provider.crowdsource_final = true;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: EdgeInsets.all(15),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                provider.dict("crowdsource_yes"),
-                                                style: TextStyle(
-                                                    fontSize: 19,
-                                                    fontWeight: FontWeight.bold
-                                                ),
-                                              ),
-                                              Icon(
-                                                  Icons.navigate_next_rounded
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                ),
-                                Expanded(
-                                    child: Card(
-                                      color: Theme.of(context).colorScheme.errorContainer,
-                                      elevation: 5,
-                                      clipBehavior: Clip.hardEdge,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: InkWell(
-                                        onTap: () async {
-                                          final SharedPreferences prefs = await SharedPreferences.getInstance();
-                                          prefs.setBool("crowdsource", false);
-                                          prefs.setBool("crowdsource_final", true);
-                                          setState(() {
-                                            provider.crowdsource_final = true;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: EdgeInsets.all(15),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                provider.dict("crowdsource_no"),
-                                                style: TextStyle(
-                                                    fontSize: 19,
-                                                    fontWeight: FontWeight.bold
-                                                ),
-                                              ),
-                                              Icon(
-                                                  Icons.navigate_next_rounded
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                ),
-                              ],
-                            )
-                          ],
-                        ),),
-                      secondChild: Container(
-                        width: scaffoldWidth,
+                    child: Expanded(
                         child: Card(
                           color: Theme.of(context).colorScheme.onPrimary,
                           elevation: 5,
-                          child: Padding(padding: EdgeInsets.all(15),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  provider.dict("sharing_enabled_title"),
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                              ],
-                            ),
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ),
-                      ),
-                      crossFadeState: (!provider.crowdsource && !provider.crowdsource_final) ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-                    ),
-                  ), // crowdsource request
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 5),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              elevation: 5,
-                              clipBehavior: Clip.hardEdge,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: InkWell(
-                                onTap: () async {
-                                  provider.readIndexedChannels();
-                                  provider.filterIndexedChannels();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexesPage()),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.all(15),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: InkWell(
+                            onTap: () async {
+                              provider.readIndexedChannels();
+                              provider.filterIndexedChannels();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexesPage()),
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         provider.dict("indexed_channels"),
@@ -1052,52 +910,33 @@ class HomePageState extends State<HomePage> {
                                             fontWeight: FontWeight.bold
                                         ),
                                       ),
-                                      Icon(
-                                          Icons.navigate_next_rounded
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                        ),
-                        Expanded(
-                            child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              elevation: 5,
-                              clipBehavior: Clip.hardEdge,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: InkWell(
-                                onTap: () async {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.all(15),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
                                       Text(
-                                        provider.dict("index_channel"),
-                                        style: TextStyle(
-                                            fontSize: 19,
-                                            fontWeight: FontWeight.bold
-                                        ),
+                                          "${provider.dict("channels")} ${provider.addedIndexes.length.toString()}",
+                                          style: TextStyle(
+                                              fontSize: 16
+                                          )
                                       ),
-                                      Icon(
-                                          Icons.navigate_next_rounded
-                                      )
                                     ],
                                   ),
-                                ),
+                                  FilledButton(
+                                    onPressed: (){
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(fullscreenDialog: true, builder: (context) => NewIndexPage()),
+                                      );
+                                    },
+                                    child: Text(
+                                      provider.dict("add"),
+                                      style: TextStyle(
+                                          fontSize: 16
+                                      ),
+                                    ),
+                                  )
+                                ],
                               ),
-                            )
-                        ),
-                      ],
+                            ),
+                          ),
+                        )
                     ),
                   ), // indexing options
                   Padding(
@@ -1152,7 +991,63 @@ class SettingsPage extends StatefulWidget {
   @override
   SettingsPageState createState() => SettingsPageState();
 }
+class EdgeToEdgeTrackShape extends RoundedRectSliderTrackShape {
+  // Override getPreferredRect to adjust the track's dimensions
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final double trackHeight = sliderTheme.trackHeight ?? 2.0;
+    final double trackWidth = parentBox.size.width;
+    final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    return Rect.fromLTWH(offset.dx, trackTop, trackWidth, trackHeight);
+  }
+}
+class RoundedThumbShape extends RoundSliderThumbShape {
+  @override
+  final double enabledThumbRadius;
 
+  RoundedThumbShape({
+    this.enabledThumbRadius = 10.0,
+  }) : super(
+    enabledThumbRadius: enabledThumbRadius,
+  );
+
+  @override
+  void paint(
+      PaintingContext context,
+      Offset center, {
+        required Animation<double> activationAnimation,
+        required Animation<double> enableAnimation,
+        required bool isDiscrete,
+        required TextPainter labelPainter,
+        required RenderBox parentBox,
+        required SliderThemeData sliderTheme,
+        required TextDirection textDirection,
+        required double value,
+        required double textScaleFactor,
+        required Size sizeWithOverflow,
+      }) {
+    super.paint(
+      context,
+      center,
+      activationAnimation: activationAnimation,
+      enableAnimation: enableAnimation,
+      isDiscrete: isDiscrete,
+      labelPainter: labelPainter,
+      parentBox: parentBox,
+      sliderTheme: sliderTheme,
+      textDirection: textDirection,
+      value: value,
+      textScaleFactor: textScaleFactor,
+      sizeWithOverflow: sizeWithOverflow,
+    );
+  }
+}
 class SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
@@ -1161,7 +1056,24 @@ class SettingsPageState extends State<SettingsPage> {
   late BuildContext context;
   late double scaffoldWidth;
   late double scaffoldHeight;
-
+  final MaterialStateProperty<Icon?> langicon =
+  MaterialStateProperty.resolveWith<Icon?>(
+        (Set<MaterialState> states) {
+      if (states.contains(MaterialState.selected)) {
+        return const Icon(Icons.android_rounded);
+      }
+      return const Icon(Icons.language_rounded);
+    },
+  );
+  final MaterialStateProperty<Icon?> shareicon =
+  MaterialStateProperty.resolveWith<Icon?>(
+        (Set<MaterialState> states) {
+      if (states.contains(MaterialState.selected)) {
+        return const Icon(Icons.cloud_queue_rounded);
+      }
+      return const Icon(Icons.cloud_off_rounded);
+    },
+  );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1174,55 +1086,265 @@ class SettingsPageState extends State<SettingsPage> {
             return Container(
               height: scaffoldHeight,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(),
-                          Icon(
-                            Icons.downloading_rounded,
-                            size: scaffoldHeight / 5,
+                  SizedBox(height: 5,),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      children: [
+                        Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          clipBehavior: Clip.hardEdge,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          Container()
-                        ]
-                    ),
-                  ),
-                  Padding(padding: EdgeInsets.all(5),
-                    child: Container(
-                      width: scaffoldWidth,
-                      child: Card(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        elevation: 5,
-                        child: Padding(padding: EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                provider.dict("user_loading_title"),
-                                style: TextStyle(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.bold
-                                ),
-                              ),
-                              Text(
-                                  provider.dict("user_loading_desc"),
-                                  style: TextStyle(
-                                      fontSize: 16
+                          child: InkWell(
+                            onTap: (){
+                              provider.saveAll();
+                              Navigator.pop(context);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.navigate_before_rounded,
+                                    size: 27,
                                   )
+                                ],
                               ),
-                              SizedBox(height: 10,),
-                              LinearProgressIndicator(
-                                borderRadius: const BorderRadius.all(Radius.circular(3)),
-                              )
-                            ],
+                            ),
                           ),
                         ),
+                        Expanded(
+                            child: Card(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              elevation: 5,
+                              child: Padding(padding: EdgeInsets.all(15),
+                                child: Text(
+                                  provider.dict("settings"),
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 5),
+                        child: Column(
+                          children: [
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 15),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          provider.dict("settings_autosave_duration_title"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.dict("settings_autosave_duration_desc").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
+                                            style: TextStyle(
+                                                fontSize: 16
+                                            )
+                                        ),
+                                        SizedBox(height: 10,),
+                                        SliderTheme(
+                                          data: SliderThemeData(
+                                            overlayShape: SliderComponentShape.noOverlay,
+                                            trackShape: EdgeToEdgeTrackShape(),
+                                            thumbShape: RoundedThumbShape(enabledThumbRadius: 8.0),
+                                          ),
+                                          child: Slider(
+                                            value: provider.autoSaveSeconds.toDouble(),
+                                            min: 10,
+                                            max: 100,
+                                            divisions: 9,
+                                            label: provider.dict("settings_autosave_duration_tip").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
+                                            onChangeEnd: (value) {
+                                              provider.saveAll();
+                                              setState(() {
+                                                provider.autoSaveSeconds = value.toInt();
+                                              });
+                                            }, onChanged: (double value) {  },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 15),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  provider.dict("settings_language_title"),
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Text(
+                                                    provider.dict(provider.systemLanguage?"settings_language_system_desc":"settings_language_desc"),
+                                                    style: TextStyle(
+                                                        fontSize: 16
+                                                    )
+                                                ),
+                                              ],
+                                            ),
+                                            Switch(
+                                              thumbIcon: langicon,
+                                              value: provider.systemLanguage,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  provider.systemLanguage = value;
+                                                });
+                                                if(value){
+                                                  provider.setSystemLanguage();
+                                                }
+                                                provider.saveAll();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        provider.systemLanguage?Container():Padding(
+                                          padding: EdgeInsets.only(top: 15),
+                                          child: DropdownMenu(
+                                            controller: provider.languageSelector,
+                                            initialSelection: provider.locale,
+                                            onSelected: (language) async {
+                                              provider.locale = language!;
+                                              final SharedPreferences prefs = await SharedPreferences.getInstance();
+                                              prefs.setString("language", language!);
+                                              setState(() {
+
+                                              });
+                                            },
+                                            enableSearch: true,
+                                            width: scaffoldWidth - 48,
+                                            label: Text(provider.dict("language_select")),
+                                            leadingIcon: const Icon(Icons.language_rounded),
+                                            dropdownMenuEntries: provider.languages.map((language) {
+                                              return DropdownMenuEntry(
+                                                value: language["id"],
+                                                label: language["origin"],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10,horizontal: 15),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  provider.dict(provider.crowdsource?"sharing_enabled_title":"sharing_disabled_title"),
+                                                  style: TextStyle(
+                                                      fontSize: 19,
+                                                      fontWeight: FontWeight.bold
+                                                  ),
+                                                ),
+                                                Text(
+                                                    provider.dict("sharing_title"),
+                                                    style: TextStyle(
+                                                        fontSize: 16
+                                                    )
+                                                ),
+                                              ],
+                                            ),
+                                            Switch(
+                                              thumbIcon: shareicon,
+                                              value: provider.crowdsource,
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  provider.crowdsource = value;
+                                                });
+                                                provider.saveAll();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        provider.crowdsource?Container():Padding(
+                                          padding: EdgeInsets.only(top:10),
+                                          child: Text(
+                                              provider.dict("sharing_disabled_desc"),
+                                              style: TextStyle(
+                                                  fontSize: 16
+                                              )
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                          ],
+                        ),
                       ),
-                    ),),
+                    ),
+                  )
                 ],
               ),
             );
@@ -1323,30 +1445,33 @@ class NewIndexPageState extends State<NewIndexPage> {
                   AnimatedCrossFade(
                     alignment: Alignment.center,
                     duration: Duration(milliseconds: 500),
-                    firstChild: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5),
-                      child: Card(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        elevation: 5,
-                        child: Padding(padding: EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                provider.dict(provider.channelNotFound?"channel_not_found_title":"channel_search"),
-                                style: TextStyle(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.bold
-                                ),
-                              ),
-                              Text(
-                                  provider.dict(provider.channelNotFound?"channel_not_found_desc":"channel_search_desc"),
+                    firstChild: Container(
+                      width: scaffoldWidth,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 5),
+                        child: Card(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          elevation: 5,
+                          child: Padding(padding: EdgeInsets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.dict(provider.loadingSearch?"channel_searching_title":provider.channelNotFound?"channel_not_found_title":"channel_search"),
                                   style: TextStyle(
-                                      fontSize: 16
-                                  )
-                              ),
-                            ],
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                Text(
+                                    provider.dict(provider.loadingSearch?"channel_searching_desc":provider.channelNotFound?"channel_not_found_desc":"channel_search_desc"),
+                                    style: TextStyle(
+                                        fontSize: 16
+                                    )
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -1372,6 +1497,7 @@ class NewIndexPageState extends State<NewIndexPage> {
                                 MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
                               );
                               provider.channelSearch.text = "";
+                              provider.candidateChannel = {};
                             },
                             child: Padding(
                               padding: EdgeInsets.all(5),
@@ -1561,6 +1687,7 @@ class IndexPageState extends State<IndexPage> {
                                       onTap: (){
                                         provider.isIndexing = false;
                                         provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
+                                        provider.currentChannel = {};
                                         provider.saveAll();
                                         Navigator.pop(context);
                                       },
@@ -1980,7 +2107,7 @@ class IndexPageState extends State<IndexPage> {
                                                   ),
                                                 ),
                                                 Text(
-                                                    "${provider.currentChannel["relations"][relation.toString()]["reposts"]} reposts",
+                                                    "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     style: TextStyle(
@@ -2040,7 +2167,7 @@ class IndexPageState extends State<IndexPage> {
                                               ),
                                             ),
                                             Text(
-                                                "${provider.currentChannel["relations"][relation]["reposts"]} reposts",
+                                                "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
                                                 style: TextStyle(
                                                     fontSize: 16
                                                 )
@@ -2065,28 +2192,26 @@ class IndexPageState extends State<IndexPage> {
                         color: Theme.of(context).colorScheme.onPrimary,
                         elevation: 5,
                         child: Padding(padding: EdgeInsets.all(15),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    provider.dict("no_relations_title"),
+                          child: Container(
+                            width: scaffoldWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.dict("no_relations_title"),
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                Text(
+                                    provider.dict("no_relations_desc"),
                                     style: TextStyle(
-                                        fontSize: 19,
-                                        fontWeight: FontWeight.bold
-                                    ),
-                                  ),
-                                  Text(
-                                      provider.dict("no_relations_desc"),
-                                      style: TextStyle(
-                                          fontSize: 16
-                                      )
-                                  ),
-                                ],
-                              ),
-                            ],
+                                        fontSize: 16
+                                    )
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       )
@@ -2097,28 +2222,26 @@ class IndexPageState extends State<IndexPage> {
                         color: Theme.of(context).colorScheme.onPrimary,
                         elevation: 5,
                         child: Padding(padding: EdgeInsets.all(15),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    provider.dict("no_messages_title"),
+                          child: Container(
+                            width: scaffoldWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.dict("no_messages_title"),
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold
+                                  ),
+                                ),
+                                Text(
+                                    provider.dict("no_messages_desc"),
                                     style: TextStyle(
-                                        fontSize: 19,
-                                        fontWeight: FontWeight.bold
-                                    ),
-                                  ),
-                                  Text(
-                                      provider.dict("no_messages_desc"),
-                                      style: TextStyle(
-                                          fontSize: 16
-                                      )
-                                  ),
-                                ],
-                              ),
-                            ],
+                                        fontSize: 16
+                                    )
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       )
@@ -2283,7 +2406,6 @@ class IndexesPageState extends State<IndexesPage> {
                               ),
                               child: InkWell(
                                 onTap: (){
-                                  print(channel);
                                   printPrettyJson(provider.addedIndexes);
                                   provider.currentChannel = provider.addedIndexes[channel["id"].toString()];
                                   provider.retreiveFullChannelInfo(channel["id"]);

@@ -37,6 +37,7 @@ class tgProvider with ChangeNotifier {
   StreamSubscription? _tdReceiveSubscription;
   bool isFirstBoot = true;
   List languages = [];
+  bool systemLanguage = false;
   Map dictionary = {};
   String locale = "en";
   bool langReady = false;
@@ -48,7 +49,6 @@ class tgProvider with ChangeNotifier {
   bool switchIntro = false;
   bool isOffline = false;
   bool crowdsource = false;
-  bool crowdsource_final = false;
   late BuildContext localContext;
   late double localWidth;
   late double localHeight;
@@ -58,6 +58,7 @@ class tgProvider with ChangeNotifier {
   Map userData = {};
   bool channelNotFound = false;
   bool searchingChannels = false;
+  bool loadingSearch = false;
 
 
   bool isIndexing = false;
@@ -74,6 +75,7 @@ class tgProvider with ChangeNotifier {
   DateTime nextAutoSave = DateTime.now();
   bool isAutoSaving = false;
   bool confirmDelete = false;
+  bool loadingChannelData = false;
 
   void init() async {
     notifyListeners();
@@ -84,11 +86,12 @@ class tgProvider with ChangeNotifier {
       getConfigOffline();
     }
     isFirstBoot = await prefs.getBool('first') ?? true;
-    crowdsource = await prefs.getBool('crowdsource') ?? false;
-    crowdsource_final = await prefs.getBool('crowdsource_final') ?? false;
     notifyListeners();
     if(!isFirstBoot){
       readIndexedChannels();
+      crowdsource = await prefs.getBool('crowdsource') ?? false;
+      autoSaveSeconds = await prefs.getInt('autoSaveSeconds') ?? 15;
+      systemLanguage = await prefs.getBool('systemLanguage') ?? false;
       launch();
     }
   }
@@ -96,18 +99,22 @@ class tgProvider with ChangeNotifier {
 
   decideLanguage() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String deviceLocale = Platform.localeName.split("_")[0];
     if(prefs.containsKey("language")){
       print("saved language found");
       locale = await prefs.getString("language")??"en";
     }else{
       print("saved language not found");
-      for(int a = 0; a < languages.length;a++){
-        print("comparing local language $locale to known ${languages[a]["id"]}");
-        if(languages[a]["id"] == deviceLocale){
-          locale = deviceLocale;
-          print("setting language $locale");
-        }
+      setSystemLanguage();
+    }
+  }
+  setSystemLanguage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String deviceLocale = Platform.localeName.split("_")[0];
+    for(int a = 0; a < languages.length;a++){
+      print("comparing local language $locale to known ${languages[a]["id"]}");
+      if(languages[a]["id"] == deviceLocale){
+        locale = deviceLocale;
+        print("setting language $locale");
       }
     }
   }
@@ -169,7 +176,7 @@ class tgProvider with ChangeNotifier {
         Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
       if(response.statusCode == 200){
-        langState = 2 / (languages.length + 2);
+        langState = 2 / (languages.length + 4);
         notifyListeners();
         languages = jsonDecode(response.body);
         decideLanguage();
@@ -325,7 +332,7 @@ class tgProvider with ChangeNotifier {
   getIndexing() async {
     while (true) {
       bool gotNext = false;
-      if(isIndexing && unresolvedRelations.isEmpty && !isAutoSaving){
+      if(isIndexing && unresolvedRelations.isEmpty && !isAutoSaving && !loadingChannelData){
         indexingStatus = "reading_channel";
         notifyListeners();
         gotNext = false;
@@ -385,7 +392,13 @@ class tgProvider with ChangeNotifier {
   saveAll() async {
     print("AUTOSAVING");
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+    if(currentChannel.isNotEmpty){
+      await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
+    }
+    prefs.setBool("crowdsource", crowdsource);
+    prefs.setString("language", locale);
+    prefs.setBool("systemLanguage", systemLanguage);
+    prefs.setInt("autoSaveSeconds", autoSaveSeconds);
     prefs.setString("addedIndexes", jsonEncode(addedIndexes));
     prefs.setString("knownChannels", jsonEncode(knownChannels));
   }
@@ -509,6 +522,7 @@ class tgProvider with ChangeNotifier {
   }
 
   retreiveFullChannelInfo (id) async {
+    loadingChannelData = true;
     tdSend(_clientId, tdApi.GetChat(chatId: id));
     bool gotChat = false;
     while (!gotChat) {
@@ -521,6 +535,7 @@ class tgProvider with ChangeNotifier {
         await getLastMessage(id, update["last_message"]["id"]);
         await getUsernameAndSubs(update["type"]["supergroup_id"]);
         updateIndexedChannels(id.toString(), currentChannel);
+        loadingChannelData = false;
         notifyListeners();
       }
       await Future.delayed(Duration(milliseconds: 100));
@@ -573,17 +588,19 @@ class tgProvider with ChangeNotifier {
   }
 
   searchChannel() async {
-    candidateChannel = {};
     if(channelSearch.text.length >= 5){
+      candidateChannel = {};
+      loadingSearch = true;
+      channelNotFound = true;
+      notifyListeners();
       bool gotChannel = false;
       tdSend(_clientId, tdApi.SearchPublicChat(username: channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim()));
-      notifyListeners();
-      channelNotFound = false;
       while (!gotChannel) {
         var update = (await tdReceive(1)?.toJson())!;
         if(update["@type"] == "error"){
           candidateChannel = {};
           gotChannel = true;
+          loadingSearch = false;
           channelNotFound = true;
           notifyListeners();
         }
@@ -592,7 +609,6 @@ class tgProvider with ChangeNotifier {
             candidateChannel["title"] = update["title"];
             candidateChannel["id"] = update["id"];
             candidateChannel["username"] = channelSearch.text.replaceAll("@", "").replaceAll("https://t.me/", "").trim();
-            print("getPic!Prerequisite: $candidateChannel");
             if(update["photo"] == null){
               candidateChannel["picfile"] = "NOPIC";
             }else{
@@ -601,6 +617,7 @@ class tgProvider with ChangeNotifier {
               });
             }
             gotChannel = true;
+            loadingSearch = false;
             channelNotFound = false;
             notifyListeners();
           }
@@ -611,6 +628,28 @@ class tgProvider with ChangeNotifier {
   }
 
   handleLoggedIn() async {
+    if (Platform.isAndroid) {
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
+      var sdkInt = androidInfo.version.sdkInt;
+      if(sdkInt < 31){
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top, SystemUiOverlay.bottom
+        ]);
+      }else{
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top
+        ]);
+      }
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.transparent,
+        ),
+      );
+    }
     doReadUpdates = false;
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;
@@ -638,28 +677,6 @@ class tgProvider with ChangeNotifier {
   }
 
   Future<void> launch () async {
-    if (Platform.isAndroid) {
-      var androidInfo = await DeviceInfoPlugin().androidInfo;
-      var sdkInt = androidInfo.version.sdkInt;
-      if(sdkInt < 31){
-        SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual, overlays: [
-          SystemUiOverlay.top, SystemUiOverlay.bottom
-        ]);
-      }else{
-        SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual, overlays: [
-          SystemUiOverlay.top
-        ]);
-      }
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: Colors.transparent,
-        ),
-      );
-    }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     await TdPlugin.initialize(tdlibPath);
