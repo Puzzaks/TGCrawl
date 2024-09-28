@@ -50,6 +50,7 @@
   "channel_searching_title": "Шукаємо...",
   "channel_searching_desc": "Ми ще шукаємо канал, зачекайте...",
   "channel_view": "Канал",
+  "reposts_view": "Репости",
   "messages": "Пости",
   "subscribers": "Підписники",
   "indexed_title": "Статус",
@@ -78,5 +79,11 @@
   "settings_language_title": "Мова додатку",
   "settings_language_desc": "Оберіть мову додатку",
   "settings_language_system_desc": "Встановлено системну мову",
-  "reposts": "Репостів:"
+  "reposts": "Репостів:",
+  "reposts_ratio": "Відсоток репостів",
+  "indexed": "Знайдено повідомлень",
+  "indexed_reposts": "Знайдено репостів",
+  "indexed_messages": "Знайдено повідомлень",
+  "indexed_related": "Знайдено каналів",
+  "indexed_relations": "Знайдено зв'язків"
 }

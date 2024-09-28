@@ -50,8 +50,9 @@
   "channel_not_found_desc": "This channel ID doesn't exist, please check or copy anew and try again!",
   "channel_searching_title": "Searching...",
   "channel_searching_desc": "We are searching for this channel, hold on...",
-  "channel_view": "Channel view",
-  "messages": "Messages",
+  "channel_view": "Channel",
+  "reposts_view": "Reposts",
+  "messages": "Total messages",
   "subscribers": "Subscribers",
   "indexed_title": "Indexing status",
   "indexing_title": "Indexing",
@@ -79,5 +80,11 @@
   "settings_language_title": "App language",
   "settings_language_desc": "Select your preferred language",
   "settings_language_system_desc": "Set to system language",
-  "reposts": "Reposts:"
+  "reposts": "Reposts:",
+  "reposts_ratio": "Reposts ratio",
+  "indexed": "Found messages",
+  "indexed_reposts": "Found reposts",
+  "indexed_messages": "Found messages",
+  "indexed_related": "Found channels",
+  "indexed_relations": "Found relations"
 }
