@@ -942,6 +942,114 @@ class HomePageState extends State<HomePage> {
                     child: Card(
                       color: Theme.of(context).colorScheme.onPrimary,
                       elevation: 5,
+                      child: Padding(padding: EdgeInsets.all(15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              provider.dict("indexed"),
+                              style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                            Text(
+                                provider.totalIndexed.toString(),
+                                style: TextStyle(
+                                    fontSize: 16
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      child: Padding(padding: EdgeInsets.all(15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              provider.dict("indexed_reposts"),
+                              style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                            Text(
+                                provider.totalReposts.toString(),
+                                style: TextStyle(
+                                    fontSize: 16
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      child: Padding(padding: EdgeInsets.all(15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              provider.dict("indexed_relations"),
+                              style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                            Text(
+                                provider.totalRelations.toString(),
+                                style: TextStyle(
+                                    fontSize: 16
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
+                      child: Padding(padding: EdgeInsets.all(15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              provider.dict("indexed_related"),
+                              style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                            Text(
+                                provider.knownChannels.length.toString(),
+                                style: TextStyle(
+                                    fontSize: 16
+                                )
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 5),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      elevation: 5,
                       clipBehavior: Clip.hardEdge,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -1255,9 +1363,7 @@ class SettingsPageState extends State<SettingsPage> {
                                               provider.locale = language!;
                                               final SharedPreferences prefs = await SharedPreferences.getInstance();
                                               prefs.setString("language", language!);
-                                              setState(() {
-
-                                              });
+                                              provider.refresh();
                                             },
                                             enableSearch: true,
                                             width: scaffoldWidth - 48,
@@ -1575,7 +1681,7 @@ class IndexPage extends StatefulWidget {
   IndexPageState createState() => IndexPageState();
 }
 
-class IndexPageState extends State<IndexPage> {
+class IndexPageState extends State<IndexPage>{
   @override
   void initState() {
     super.initState();
@@ -1592,6 +1698,7 @@ class IndexPageState extends State<IndexPage> {
       return const Icon(Icons.pause_rounded);
     },
   );
+  bool showChannel = true;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1623,6 +1730,7 @@ class IndexPageState extends State<IndexPage> {
                           child: InkWell(
                             onTap: (){
                               provider.isIndexing = false;
+                              provider.confirmDelete = false;
                               provider.saveAll();
                               Navigator.pop(context);
                             },
@@ -1662,11 +1770,13 @@ class IndexPageState extends State<IndexPage> {
                                       },
                                       child: Padding(
                                         padding: EdgeInsets.all(15),
-                                        child: Text(
-                                          provider.dict("cancel"),
-                                          style: TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.bold
+                                        child: Center(
+                                          child: Text(
+                                            provider.dict("cancel"),
+                                            style: TextStyle(
+                                                fontSize: 19,
+                                                fontWeight: FontWeight.bold
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -1686,17 +1796,20 @@ class IndexPageState extends State<IndexPage> {
                                         provider.isIndexing = false;
                                         provider.deleteIndexedChannel(provider.currentChannel["id"].toString());
                                         provider.currentChannel = {};
+                                        provider.confirmDelete = false;
                                         provider.saveAll();
                                         Navigator.pop(context);
                                       },
                                       child: Padding(
                                         padding: EdgeInsets.all(15),
-                                        child: Text(
-                                          provider.dict("confirm"),
-                                          style: TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.bold
-                                          ),
+                                        child: Center(
+                                            child: Text(
+                                              provider.dict("confirm"),
+                                              style: TextStyle(
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
                                         ),
                                       ),
                                     ),
@@ -1708,18 +1821,62 @@ class IndexPageState extends State<IndexPage> {
                               children: [
                                 Expanded(
                                     child: Card(
-                                      color: Theme.of(context).colorScheme.onPrimary,
-                                      elevation: 5,
-                                      child: Padding(padding: EdgeInsets.all(15),
-                                        child: Text(
-                                          provider.dict("channel_view"),
-                                          style: TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.bold
+                                      color: showChannel?Theme.of(context).colorScheme.onPrimary:Theme.of(context).colorScheme.onPrimary.withOpacity(0.25),
+                                      elevation: showChannel?5:0,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          setState(() {
+                                            showChannel = true;
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Center(
+                                            child: Text(
+                                              provider.dict("channel_view"),
+                                              style: TextStyle(
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    )),
+                                    )
+                                ),
+                                Expanded(
+                                    child: Card(
+                                      color: showChannel?Theme.of(context).colorScheme.onPrimary.withOpacity(0.25):Theme.of(context).colorScheme.onPrimary,
+                                      elevation: showChannel?0:5,
+                                      clipBehavior: Clip.hardEdge,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: InkWell(
+                                        onTap: (){
+                                          setState(() {
+                                            showChannel = false;
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Center(
+                                            child: Text(
+                                              provider.dict("reposts_view"),
+                                              style: TextStyle(
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                ),
                                 Card(
                                   color: Theme.of(context).colorScheme.errorContainer,
                                   elevation: 5,
@@ -1754,7 +1911,7 @@ class IndexPageState extends State<IndexPage> {
                         ),
                       ],
                     ),
-                  ),
+                  ), // navigation
                   Padding(
                       padding: EdgeInsets.symmetric(horizontal:5),
                       child: Card(
@@ -1772,13 +1929,13 @@ class IndexPageState extends State<IndexPage> {
                                     width: 60,
                                     height: 60,
                                     child: Center(
-                                        child: Text(
-                                          provider.currentChannel["title"][0],
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 24
-                                          ),
+                                      child: Text(
+                                        provider.currentChannel["title"][0],
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 24
                                         ),
+                                      ),
                                     ),
                                   ) : Image.file(
                                     File(provider.currentChannel["picfile"]),
@@ -1820,66 +1977,7 @@ class IndexPageState extends State<IndexPage> {
                           ),
                         ),
                       )
-                  ),
-                  Padding(
-                      padding: EdgeInsets.symmetric(horizontal:5),
-                      child: Row(
-                          children: [
-                            Expanded(
-                                child: Card(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  elevation: 5,
-                                  child: Padding(padding: EdgeInsets.all(15),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          provider.dict("subscribers"),
-                                          style: TextStyle(
-                                              fontSize: 19,
-                                              fontWeight: FontWeight.bold
-                                          ),
-                                        ),
-                                        Text(
-                                            provider.currentChannel.containsKey("subs")?provider.currentChannel["subs"].toString():"0",
-                                            style: TextStyle(
-                                                fontFamily: provider.currentChannel.containsKey("subs")?null:"Flow",
-                                                fontSize: 16
-                                            )
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                            ),
-                            Expanded(child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              elevation: 5,
-                              child: Padding(padding: EdgeInsets.all(15),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      provider.dict("messages"),
-                                      style: TextStyle(
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.bold
-                                      ),
-                                    ),
-                                    Text(
-                                        provider.currentChannel.containsKey("lastmsgid")?provider.currentChannel["lastmsgid"].toString():"0",
-                                        style: TextStyle(
-                                            fontFamily: provider.currentChannel.containsKey("lastmsgid")?null:"Flow",
-                                            fontSize: 16
-                                        )
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ))
-                          ]
-                      )
-                  ),
+                  ), // channel
                   Padding(
                       padding: EdgeInsets.symmetric(horizontal:5),
                       child: Card(
@@ -1953,104 +2051,240 @@ class IndexPageState extends State<IndexPage> {
                           ),
                         ),
                       )
-                  ),
-                  // Padding(
-                  //     padding: EdgeInsets.symmetric(horizontal:5),
-                  //     child: Card(
-                  //       color: Theme.of(context).colorScheme.onPrimary,
-                  //       elevation: 5,
-                  //       child: Padding(padding: EdgeInsets.symmetric(horizontal: 15,vertical: 10),
-                  //         child: Row(
-                  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //           children: [
-                  //             Column(
-                  //               crossAxisAlignment: CrossAxisAlignment.start,
-                  //               children: [
-                  //                 Text(
-                  //                   provider.dict("clear_index_title"),
-                  //                   style: TextStyle(
-                  //                       fontSize: 19,
-                  //                       fontWeight: FontWeight.bold
-                  //                   ),
-                  //                 ),
-                  //                 Text(
-                  //                     provider.dict("clear_index_desc"),
-                  //                     style: TextStyle(
-                  //                         fontSize: 16
-                  //                     )
-                  //                 ),
-                  //               ],
-                  //             ),
-                  //             FilledButton(
-                  //                 onPressed: (){
-                  //                   showDialog<String>(
-                  //                     context: context,
-                  //                     builder: (BuildContext context) => AlertDialog(
-                  //                       content: Column(
-                  //                         crossAxisAlignment: CrossAxisAlignment.start,
-                  //                         mainAxisSize: MainAxisSize.min,
-                  //                         children: [
-                  //                           Text(provider.dict("clear_index_confirm").replaceAll("(PERCENT)","${
-                  //                           (
-                  //                               (
-                  //                                   (
-                  //                                       provider.currentChannel.containsKey("lastindexedid")
-                  //                                           ? provider.currentChannel["lastindexedid"]
-                  //                                           : 0
-                  //                                   )/(
-                  //                                       provider.currentChannel.containsKey("lastmsgid")
-                  //                                           ? int.parse(provider.currentChannel["lastmsgid"])
-                  //                                           : 0
-                  //                                   )
-                  //                               ) * 100
-                  //                           ).toStringAsFixed(2)}")
-                  //                           )
-                  //                         ],
-                  //                       ),
-                  //                       actions: [
-                  //                         Row(
-                  //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //                           children: [
-                  //                             FilledButton(
-                  //                                 onPressed: () {
-                  //                                   Navigator.pop(context);
-                  //                                 },
-                  //                                 style: ButtonStyle(backgroundColor: MaterialStateColor.resolveWith((states) => Theme.of(context).colorScheme.error)),
-                  //                                 child: Text(
-                  //                                   provider.dict("cancel"),
-                  //                                   style: TextStyle(color: Theme.of(context).colorScheme.background),
-                  //                                 )
-                  //                             ),
-                  //                             FilledButton(
-                  //                                 onPressed: () async {
-                  //                                   Navigator.pop(context);
-                  //                                 },
-                  //                                 child: Text(provider.dict("clear_index_action"))
-                  //                             ),
-                  //                           ],
-                  //                         )
-                  //                       ],
-                  //                     ),
-                  //                   );
-                  //                 },
-                  //                 child: Text(
-                  //                     provider.dict("clear_index_action"),
-                  //                     style: TextStyle(
-                  //                         fontSize: 16
-                  //                     )
-                  //                 )
-                  //             )
-                  //           ],
-                  //         ),
-                  //       ),
-                  //     )
-                  // ),
-                  provider.currentChannel.containsKey("relations")
-                      ? Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: provider.currentChannel["relations"].keys.toList().reversed.map((relation) {
-                          if(provider.knownChannels.containsKey(relation.toString())){
+                  ), // status
+                  Container(
+                    height: scaffoldHeight - 266,
+                    child: AnimatedCrossFade(
+                      alignment: Alignment.center,
+                      duration: Duration(milliseconds: 100),
+                      firstChild: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          provider.dict("subscribers"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.currentChannel.containsKey("subs")?provider.currentChannel["subs"].toString():"0",
+                                            style: TextStyle(
+                                                fontFamily: provider.currentChannel.containsKey("subs")?null:"Flow",
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          provider.dict("messages"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.currentChannel.containsKey("lastmsgid")?provider.currentChannel["lastmsgid"].toString():"0",
+                                            style: TextStyle(
+                                                fontFamily: provider.currentChannel.containsKey("lastmsgid")?null:"Flow",
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          provider.dict("reposts_view"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.currentChannel.containsKey("reposts")?provider.currentChannel["reposts"].toString():"0",
+                                            style: TextStyle(
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          provider.dict("indexed"),
+                                          style: TextStyle(
+                                              fontSize: 19,
+                                              fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        Text(
+                                            provider.currentChannel.containsKey("lastindexedid")?provider.currentChannel["lastindexedid"].toString():"0",
+                                            style: TextStyle(
+                                                fontSize: 16
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal:5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  elevation: 5,
+                                  child: Padding(padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              provider.dict("reposts_ratio"),
+                                              style: TextStyle(
+                                                  fontSize: 19,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                            Text(
+                                                "${(provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid"))?(((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0)/(provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0)) * 100).toStringAsFixed(2):0}%",
+                                                style: TextStyle(
+                                                    fontSize: 16
+                                                )
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 5,),
+                                        LinearProgressIndicator(
+                                          value: (provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid"))?((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0)/(provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0)):0,
+                                          borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                )
+                            )
+                          ],
+                        ),
+                      ),
+                      secondChild: provider.currentChannel.containsKey("relations")
+                          ? SingleChildScrollView(
+                        child: Column(
+                          children: provider.currentChannel["relations"].keys.toList().reversed.map((relation) {
+                            if(provider.knownChannels.containsKey(relation.toString())){
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 5),
+                                child: Container(
+                                  width: scaffoldWidth,
+                                  child: Card(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    elevation: 5,
+                                    clipBehavior: Clip.hardEdge,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(5),
+                                      child: Row(
+                                        children: [
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(10.0),
+                                            child: (provider.knownChannels[relation.toString()]["picfile"] == "NOPIC" || !provider.knownChannels[relation.toString()].containsKey("picfile")) ? Container(
+                                              color: Theme.of(context).colorScheme.primaryContainer,
+                                              width: 60,
+                                              height: 60,
+                                              child: Center(
+                                                child: Text(
+                                                  provider.knownChannels[relation.toString()]["title"][0],
+                                                  style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 24
+                                                  ),
+                                                ),
+                                              ),
+                                            ) : Image.file(
+                                              File(provider.knownChannels[relation.toString()]["picfile"]),
+                                              width: 60,
+                                              height: 60,
+                                            ),
+                                          ),
+                                          Container(
+                                            width: scaffoldWidth - 88,
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisAlignment: MainAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    provider.knownChannels[relation.toString()]["title"],
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontSize: 19,
+                                                        fontWeight: FontWeight.bold
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                      "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                          fontSize: 16
+                                                      )
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),);
+                            }
                             return Padding(
                               padding: EdgeInsets.symmetric(horizontal: 5),
                               child: Container(
@@ -2068,52 +2302,38 @@ class IndexPageState extends State<IndexPage> {
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(10.0),
-                                          child: (provider.knownChannels[relation.toString()]["picfile"] == "NOPIC" || !provider.knownChannels[relation.toString()].containsKey("picfile")) ? Container(
+                                          child: Container(
                                             color: Theme.of(context).colorScheme.primaryContainer,
                                             width: 60,
                                             height: 60,
                                             child: Center(
-                                              child: Text(
-                                                provider.knownChannels[relation.toString()]["title"][0],
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 24
-                                                ),
-                                              ),
+                                              child: Icon(Icons.downloading_rounded,
+                                                size: 24
+                                                ,),
                                             ),
-                                          ) : Image.file(
-                                            File(provider.knownChannels[relation.toString()]["picfile"]),
-                                            width: 60,
-                                            height: 60,
                                           ),
                                         ),
-                                        Container(
-                                          width: scaffoldWidth - 88,
-                                          child: Padding(
-                                            padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              mainAxisAlignment: MainAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  provider.knownChannels[relation.toString()]["title"],
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Loading...",
+                                                style: TextStyle(
+                                                    fontFamily: "Flow",
+                                                    fontSize: 19,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              Text(
+                                                  "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
                                                   style: TextStyle(
-                                                      fontSize: 19,
-                                                      fontWeight: FontWeight.bold
-                                                  ),
-                                                ),
-                                                Text(
-                                                    "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                        fontSize: 16
-                                                    )
-                                                ),
-                                              ],
-                                            ),
+                                                      fontSize: 16
+                                                  )
+                                              ),
+                                            ],
                                           ),
                                         )
                                       ],
@@ -2121,129 +2341,74 @@ class IndexPageState extends State<IndexPage> {
                                   ),
                                 ),
                               ),);
-                          }
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 5),
-                            child: Container(
-                              width: scaffoldWidth,
-                              child: Card(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                elevation: 5,
-                                clipBehavior: Clip.hardEdge,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.all(5),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(10.0),
-                                        child: Container(
-                                          color: Theme.of(context).colorScheme.primaryContainer,
-                                          width: 60,
-                                          height: 60,
-                                          child: Center(
-                                            child: Icon(Icons.downloading_rounded,
-                                            size: 24
-                                              ,),
-                                          ),
-                                        ),
+                            return Text("${provider.knownChannels.containsKey(relation)?"${provider.knownChannels[relation]["title"]}":"Unknown"} - ${provider.currentChannel["relations"][relation]["reposts"]} reposts");
+                          }).toList().cast<Widget>(),
+                        ),
+                      )
+                          : provider.currentChannel.containsKey("lastmsgid")
+                          ? Padding(
+                          padding: EdgeInsets.symmetric(horizontal:5),
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            elevation: 5,
+                            child: Padding(padding: EdgeInsets.all(15),
+                              child: Container(
+                                width: scaffoldWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      provider.dict("no_relations_title"),
+                                      style: TextStyle(
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.bold
                                       ),
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 15,vertical: 5),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Loading...",
-                                              style: TextStyle(
-                                                  fontFamily: "Flow",
-                                                  fontSize: 19,
-                                                  fontWeight: FontWeight.bold
-                                              ),
-                                            ),
-                                            Text(
-                                                "${provider.dict("reposts")} ${provider.currentChannel["relations"][relation]["reposts"]}",
-                                                style: TextStyle(
-                                                    fontSize: 16
-                                                )
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    ],
-                                  ),
+                                    ),
+                                    Text(
+                                        provider.dict("no_relations_desc"),
+                                        style: TextStyle(
+                                            fontSize: 16
+                                        )
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),);
-                          return Text("${provider.knownChannels.containsKey(relation)?"${provider.knownChannels[relation]["title"]}":"Unknown"} - ${provider.currentChannel["relations"][relation]["reposts"]} reposts");
-                        }).toList().cast<Widget>(),
+                            ),
+                          )
+                      )
+                          : Padding(
+                          padding: EdgeInsets.symmetric(horizontal:5),
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            elevation: 5,
+                            child: Padding(padding: EdgeInsets.all(15),
+                              child: Container(
+                                width: scaffoldWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      provider.dict("no_messages_title"),
+                                      style: TextStyle(
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                    Text(
+                                        provider.dict("no_messages_desc"),
+                                        style: TextStyle(
+                                            fontSize: 16
+                                        )
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
                       ),
+                      crossFadeState: showChannel ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                     ),
-                  )
-                      : provider.currentChannel.containsKey("lastmsgid")
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal:5),
-                      child: Card(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        elevation: 5,
-                        child: Padding(padding: EdgeInsets.all(15),
-                          child: Container(
-                            width: scaffoldWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  provider.dict("no_relations_title"),
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                                Text(
-                                    provider.dict("no_relations_desc"),
-                                    style: TextStyle(
-                                        fontSize: 16
-                                    )
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                  )
-                  : Padding(
-                      padding: EdgeInsets.symmetric(horizontal:5),
-                      child: Card(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        elevation: 5,
-                        child: Padding(padding: EdgeInsets.all(15),
-                          child: Container(
-                            width: scaffoldWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  provider.dict("no_messages_title"),
-                                  style: TextStyle(
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                                Text(
-                                    provider.dict("no_messages_desc"),
-                                    style: TextStyle(
-                                        fontSize: 16
-                                    )
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                  )
+                  ),
                 ],
               ),
             );

@@ -77,6 +77,10 @@ class tgProvider with ChangeNotifier {
   bool confirmDelete = false;
   bool loadingChannelData = false;
 
+  int totalIndexed = 0;
+  int totalReposts = 0;
+  int totalRelations = 0;
+
   void init() async {
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -92,6 +96,9 @@ class tgProvider with ChangeNotifier {
       crowdsource = await prefs.getBool('crowdsource') ?? false;
       autoSaveSeconds = await prefs.getInt('autoSaveSeconds') ?? 15;
       systemLanguage = await prefs.getBool('systemLanguage') ?? false;
+      totalIndexed = await prefs.getInt('totalIndexed') ?? 0;
+      totalReposts = await prefs.getInt('totalReposts') ?? 0;
+      totalRelations = await prefs.getInt('totalRelations') ?? 0;
       launch();
     }
   }
@@ -329,6 +336,9 @@ class tgProvider with ChangeNotifier {
       await Future.delayed(Duration(milliseconds: 100));
     }
   }
+  refresh(){
+    notifyListeners();
+  }
   getIndexing() async {
     while (true) {
       bool gotNext = false;
@@ -347,12 +357,14 @@ class tgProvider with ChangeNotifier {
               currentChannel["donepercent"] = 100;
               notifyListeners();
             }else{
+              totalIndexed ++;
               currentChannel["donepercent"] = (((currentChannel.containsKey("lastindexedid") ? currentChannel["lastindexedid"] : 0)/(currentChannel.containsKey("lastmsgid") ? int.parse(currentChannel["lastmsgid"]) : 0)) * 100);
               currentChannel["isDone"] = false;
               currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
               currentChannel["lastindexed"] = update["messages"][0]["id"];
               if(update["messages"][0]["forward_info"] == null){}else{
                 if(update["messages"][0]["forward_info"]["origin"]["chat_id"] == null){}else{
+                  totalReposts ++;
                   addRelationToChannel(currentChannel["id"],update["messages"][0]["forward_info"]["origin"]["chat_id"], update["messages"][0]);
                 }
               }
@@ -381,6 +393,7 @@ class tgProvider with ChangeNotifier {
         }else{
           await retreiveFullRelatedChannelInfo(unresolvedRelations[0]);
           unresolvedRelations.removeAt(0);
+          saveAll();
         }
       }else{
         await Future.delayed(Duration(milliseconds: 100));
@@ -395,6 +408,10 @@ class tgProvider with ChangeNotifier {
     if(currentChannel.isNotEmpty){
       await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
     }
+
+    prefs.setInt("totalIndexed", totalIndexed);
+    prefs.setInt("totalReposts", totalReposts);
+    prefs.setInt("totalRelations", totalRelations);
     prefs.setBool("crowdsource", crowdsource);
     prefs.setString("language", locale);
     prefs.setBool("systemLanguage", systemLanguage);
@@ -430,11 +447,21 @@ class tgProvider with ChangeNotifier {
       currentChannel["relations"][relatedChannelID.toString()]["firstrepost"] = message["date"];
       currentChannel["relations"][relatedChannelID.toString()]["reposts"] ++;
     }else{
+      totalRelations ++;
       currentChannel["relations"][relatedChannelID.toString()] = {};
       currentChannel["relations"][relatedChannelID.toString()]["lastrepost"] = message["date"];
       currentChannel["relations"][relatedChannelID.toString()]["reposts"] = 1;
       if(!knownChannels.containsKey(message["forward_info"]["origin"]["chat_id"].toString())) {
         unresolvedRelations.add(message["forward_info"]["origin"]["chat_id"].toString());
+      }else{
+        Map relation = knownChannels[message["forward_info"]["origin"]["chat_id"].toString()];
+        if(relation.containsKey("subs") && relation.containsKey("username") && relation.containsKey("picfile") && relation.containsKey("supergroupid") && relation.containsKey("title") && relation.containsKey("id")){
+          print("I know this channel:");
+          printPrettyJson(knownChannels[message["forward_info"]["origin"]["chat_id"].toString()]);
+        }else{
+          print("I DON'T know this channel:");
+          printPrettyJson(knownChannels[message["forward_info"]["origin"]["chat_id"].toString()]);
+        }
       }
     }
     await updateIndexedChannels(currentChannel["id"], currentChannel);
