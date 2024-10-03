@@ -81,9 +81,11 @@
   "settings_language_system_desc": "Встановлено системну мову",
   "reposts": "Репостів:",
   "reposts_ratio": "Відсоток репостів",
-  "indexed": "Знайдено повідомлень",
   "indexed_reposts": "Знайдено репостів",
-  "indexed_messages": "Знайдено повідомлень",
+  "indexed_messages": "Повідомлень",
   "indexed_related": "Знайдено каналів",
-  "indexed_relations": "Знайдено зв'язків"
+  "indexed_relations": "Знайдено зв'язків",
+  "developer_contact": "Зв'язок з розробником",
+  "constructing_graph": "Генеруємо мапу",
+  "constructed_graph": "Мапу згенеровано"
 }

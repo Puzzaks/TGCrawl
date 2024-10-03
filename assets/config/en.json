@@ -82,9 +82,11 @@
   "settings_language_system_desc": "Set to system language",
   "reposts": "Reposts:",
   "reposts_ratio": "Reposts ratio",
-  "indexed": "Found messages",
   "indexed_reposts": "Found reposts",
   "indexed_messages": "Found messages",
   "indexed_related": "Found channels",
-  "indexed_relations": "Found relations"
+  "indexed_relations": "Found relations",
+  "developer_contact": "Developer contact",
+  "constructing_graph": "Constructing graph",
+  "constructed_graph": "Graph constructed"
 }
