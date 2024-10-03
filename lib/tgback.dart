@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pretty_json/pretty_json.dart';
+import 'package:restart_app/restart_app.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tdlib/td_client.dart';
@@ -95,7 +96,31 @@ class tgProvider with ChangeNotifier {
 
   Map displayChannel = {};
 
+  DateTime launchingSince = DateTime.now();
+
   void init() async {
+    if (Platform.isAndroid) {
+      var androidInfo = await DeviceInfoPlugin().androidInfo;
+      var sdkInt = androidInfo.version.sdkInt;
+      if(sdkInt < 31){
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top, SystemUiOverlay.bottom
+        ]);
+      }else{
+        SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.manual, overlays: [
+          SystemUiOverlay.top
+        ]);
+      }
+      SystemChrome.setSystemUIOverlayStyle(
+        SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: Colors.transparent,
+        ),
+      );
+    }
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(kReleaseMode){
@@ -129,7 +154,6 @@ class tgProvider with ChangeNotifier {
     }
   }
   setSystemLanguage() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
     String deviceLocale = Platform.localeName.split("_")[0];
     for(int a = 0; a < languages.length;a++){
       print("comparing local language $locale to known ${languages[a]["id"]}");
@@ -268,11 +292,18 @@ class tgProvider with ChangeNotifier {
   }
 
   void startTdReceiveUpdates() async {
+    launchingSince = DateTime.now().add(Duration(seconds: 30));
     while (true) {
       if(doReadUpdates){
         var result = await tdReceive(1);
         _tdReceiveSubject.add(result);
         await Future.delayed(Duration(milliseconds: 100));
+        if(DateTime.now().isAfter(launchingSince)){
+          Restart.restartApp(
+              notificationTitle: dict("restart_tdlib_error_title"),
+              notificationBody: dict("restart_tdlib_error_desc")
+          );
+        }
       }else{
         await Future.delayed(Duration(milliseconds: 100));
       }
@@ -722,28 +753,6 @@ class tgProvider with ChangeNotifier {
   }
 
   handleLoggedIn() async {
-    if (Platform.isAndroid) {
-      var androidInfo = await DeviceInfoPlugin().androidInfo;
-      var sdkInt = androidInfo.version.sdkInt;
-      if(sdkInt < 31){
-        SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual, overlays: [
-          SystemUiOverlay.top, SystemUiOverlay.bottom
-        ]);
-      }else{
-        SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.manual, overlays: [
-          SystemUiOverlay.top
-        ]);
-      }
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: Colors.transparent,
-        ),
-      );
-    }
     doReadUpdates = false;
     tdSend(_clientId,tdApi.GetMe());
     bool gotUser = false;
@@ -778,66 +787,66 @@ class tgProvider with ChangeNotifier {
     await TdPlugin.initialize(tdlibPath);
     _clientId = tdCreate();
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
-    var update = updateRaw?.toJson().cast<dynamic, dynamic>();
-    if(!(update == null)){
-      notifyListeners();
-      switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
-        case "updateOption":
-          if(jsonDecode(jsonify(raw: update.toString()))["name"].toString() == "my_id"){
-            userID = int.parse(jsonDecode(jsonify(raw: update.toString()))["value"]["value"]);
+      var update = updateRaw?.toJson().cast<dynamic, dynamic>();
+      if(!(update == null)){
+        notifyListeners();
+        switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
+          case "updateOption":
+            if(jsonDecode(jsonify(raw: update.toString()))["name"].toString() == "my_id"){
+              userID = int.parse(jsonDecode(jsonify(raw: update.toString()))["value"]["value"]);
+              notifyListeners();
+            }
+            break;
+          case "authorizationStateWaitCode":
+            loginState = 0.5;
+            isWaitingCode = true;
+            isWaitingNumber = false;
+            doReadUpdates = false;
             notifyListeners();
-          }
-          break;
-        case "authorizationStateWaitCode":
-          loginState = 0.5;
-          isWaitingCode = true;
-          isWaitingNumber = false;
-          doReadUpdates = false;
-          notifyListeners();
-          break;
-        case "updateAuthorizationState":
-          switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
-            case "authorizationStateWaitPassword":
-              loginState = 0.75;
-              isWaitingPassword = true;
-              isWaitingCode = false;
-              doReadUpdates = false;
-              notifyListeners();
-              break;
-            case "authorizationStateWaitPhoneNumber":
-              loginState = 0.25;
-              isWaitingNumber = true;
-              doReadUpdates = false;
-              notifyListeners();
-              break;
-            case "authorizationStateWaitCode":
-              loginState = 0.5;
-              isWaitingCode = true;
-              isWaitingNumber = false;
-              doReadUpdates = false;
-              notifyListeners();
-              break;
-            case "authorizationStateWaitTdlibParameters":
-              loginState = 0.0;
-              sendTdLibParams();
-              break;
-            case"authorizationStateReady":
-              prefs.setBool('LoggedIn', true);
-              loginState = 1;
-              isWaitingPassword = false;
-              isWaitingCode = false;
-              isWaitingNumber = false;
-              doReadUpdates = false;
-              isLoggedIn = true;
-              notifyListeners();
-              handleLoggedIn();
-              break;
-          }
-          break;
+            break;
+          case "updateAuthorizationState":
+            switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
+              case "authorizationStateWaitPassword":
+                loginState = 0.75;
+                isWaitingPassword = true;
+                isWaitingCode = false;
+                doReadUpdates = false;
+                notifyListeners();
+                break;
+              case "authorizationStateWaitPhoneNumber":
+                loginState = 0.25;
+                isWaitingNumber = true;
+                doReadUpdates = false;
+                notifyListeners();
+                break;
+              case "authorizationStateWaitCode":
+                loginState = 0.5;
+                isWaitingCode = true;
+                isWaitingNumber = false;
+                doReadUpdates = false;
+                notifyListeners();
+                break;
+              case "authorizationStateWaitTdlibParameters":
+                loginState = 0.0;
+                sendTdLibParams();
+                break;
+              case"authorizationStateReady":
+                prefs.setBool('LoggedIn', true);
+                loginState = 1;
+                isWaitingPassword = false;
+                isWaitingCode = false;
+                isWaitingNumber = false;
+                doReadUpdates = false;
+                isLoggedIn = true;
+                notifyListeners();
+                handleLoggedIn();
+                break;
+            }
+            break;
+        }
+        updates.insert(0, update);
+        notifyListeners();
       }
-      updates.insert(0, update);
-      notifyListeners();
-    }
     });
     sendTdLibParams();
     startTdReceiveUpdates();

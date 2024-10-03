@@ -1,13 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-import 'dart:ui';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tgcrawl/tgback.dart';
@@ -116,7 +110,6 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   );
-                  return provider.isFirstBoot ? firstBoot() : tgLogin();
                 },
               );
             }),
@@ -814,7 +807,7 @@ class HomePageState extends State<HomePage> {
                           );
                         },
                         child: Padding(
-                          padding: EdgeInsets.all(15),
+                          padding: EdgeInsets.symmetric(horizontal: 15,vertical: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -846,6 +839,52 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                   ), // indexing options
+                  Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      child: Card(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        clipBehavior: Clip.hardEdge,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: InkWell(
+                          onTap: (){
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(fullscreenDialog: true, builder: (context) => relationsMap()),
+                            );
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      provider.graphConstructed?provider.dict("constructed_graph"):provider.dict("constructing_graph"),
+                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(bottom: 5),
+                                      child: Text(
+                                          "${provider.graphDone.length.toString()} / ${provider.graphTotal.length.toString()}", style: TextStyle(fontSize: 16)
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                LinearProgressIndicator(
+                                  value: provider.graphDone.length == 0?1:provider.graphDone.length/provider.graphTotal.length,
+                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      )),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     child: Card(
@@ -922,52 +961,6 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5),
-                      child: Card(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        clipBehavior: Clip.hardEdge,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: InkWell(
-                          onTap: (){
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(fullscreenDialog: true, builder: (context) => relationsMap()),
-                            );
-                          },
-                          child: Padding(
-                            padding: EdgeInsets.all(15),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      provider.graphConstructed?provider.dict("constructed_graph"):provider.dict("constructing_graph"),
-                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: 5),
-                                      child: Text(
-                                          "${provider.graphDone.length.toString()} / ${provider.graphTotal.length.toString()}", style: TextStyle(fontSize: 16)
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                LinearProgressIndicator(
-                                  value: provider.graphDone.length == 0?1:provider.graphDone.length/provider.graphTotal.length,
-                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      )),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 5),
                     child: Card(
@@ -1082,17 +1075,17 @@ class SettingsPageState extends State<SettingsPage> {
   late BuildContext context;
   late double scaffoldWidth;
   late double scaffoldHeight;
-  final MaterialStateProperty<Icon?> langicon = MaterialStateProperty.resolveWith<Icon?>(
-    (Set<MaterialState> states) {
-      if (states.contains(MaterialState.selected)) {
+  final WidgetStateProperty<Icon?> langicon = WidgetStateProperty.resolveWith<Icon?>(
+    (Set<WidgetState> states) {
+      if (states.contains(WidgetState.selected)) {
         return const Icon(Icons.android_rounded);
       }
       return const Icon(Icons.language_rounded);
     },
   );
-  final MaterialStateProperty<Icon?> shareicon = MaterialStateProperty.resolveWith<Icon?>(
-    (Set<MaterialState> states) {
-      if (states.contains(MaterialState.selected)) {
+  final WidgetStateProperty<Icon?> shareicon = WidgetStateProperty.resolveWith<Icon?>(
+    (Set<WidgetState> states) {
+      if (states.contains(WidgetState.selected)) {
         return const Icon(Icons.cloud_queue_rounded);
       }
       return const Icon(Icons.cloud_off_rounded);
@@ -1478,7 +1471,7 @@ class NewIndexPageState extends State<NewIndexPage> {
                         ),
                         Expanded(
                             child: Padding(
-                          padding: EdgeInsets.only(left: 5),
+                          padding: EdgeInsets.only(left: 5,right:10),
                           child: TextField(
                             onChanged: (text) {
                               provider.searchChannel();
@@ -1639,9 +1632,9 @@ class IndexPageState extends State<IndexPage> {
   late BuildContext context;
   late double scaffoldWidth;
   late double scaffoldHeight;
-  final MaterialStateProperty<Icon?> playicon = MaterialStateProperty.resolveWith<Icon?>(
-    (Set<MaterialState> states) {
-      if (states.contains(MaterialState.selected)) {
+  final WidgetStateProperty<Icon?> playicon = WidgetStateProperty.resolveWith<Icon?>(
+    (Set<WidgetState> states) {
+      if (states.contains(WidgetState.selected)) {
         return const Icon(Icons.play_arrow_rounded);
       }
       return const Icon(Icons.pause_rounded);
@@ -1938,7 +1931,7 @@ class IndexPageState extends State<IndexPage> {
                             });
                           },
                           child: Padding(
-                            padding: EdgeInsets.only(left: 15, right: 10, bottom: 10, top: 10),
+                            padding: EdgeInsets.only(left: 15, right: 10, bottom: 10, top: 5),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -1985,13 +1978,46 @@ class IndexPageState extends State<IndexPage> {
                         ),
                       )), // status
                   Container(
-                    height: scaffoldHeight - 290,
+                    height: scaffoldHeight - 261,
                     child: AnimatedCrossFade(
                       alignment: Alignment.center,
                       duration: Duration(milliseconds: 100),
                       firstChild: SingleChildScrollView(
                         child: Column(
                           children: [
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              provider.dict("reposts_ratio"),
+                                              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                                "${(provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid")) ? (((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0) / (provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0)) * 100).toStringAsFixed(2) : 0}%",
+                                                style: TextStyle(fontSize: 16)),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        LinearProgressIndicator(
+                                          value: (provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid"))
+                                              ? ((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0) / (provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0))
+                                              : 0,
+                                          borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                )),
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 5),
                                 child: Card(
@@ -2080,39 +2106,6 @@ class IndexPageState extends State<IndexPage> {
                                           style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                         ),
                                         Text(provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"].toString() : "0", style: TextStyle(fontSize: 16)),
-                                      ],
-                                    ),
-                                  ),
-                                )),
-                            Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 5),
-                                child: Card(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(15),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              provider.dict("reposts_ratio"),
-                                              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                            ),
-                                            Text(
-                                                "${(provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid")) ? (((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0) / (provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0)) * 100).toStringAsFixed(2) : 0}%",
-                                                style: TextStyle(fontSize: 16)),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        LinearProgressIndicator(
-                                          value: (provider.currentChannel.containsKey("donepercent") && provider.currentChannel.containsKey("reposts") && provider.currentChannel.containsKey("lastindexedid"))
-                                              ? ((provider.currentChannel.containsKey("reposts") ? provider.currentChannel["reposts"] : 0) / (provider.currentChannel.containsKey("lastindexedid") ? provider.currentChannel["lastindexedid"] : 0))
-                                              : 0,
-                                          borderRadius: const BorderRadius.all(Radius.circular(3)),
-                                        )
                                       ],
                                     ),
                                   ),
@@ -2256,7 +2249,6 @@ class IndexPageState extends State<IndexPage> {
                                           ),
                                         ),
                                       );
-                                      return Text("${provider.knownChannels.containsKey(relation) ? "${provider.knownChannels[relation]["title"]}" : "Unknown"} - ${provider.currentChannel["relations"][relation]["reposts"]} reposts");
                                     })
                                     .toList()
                                     .cast<Widget>(),
@@ -2343,7 +2335,7 @@ class IndexesPageState extends State<IndexesPage> {
             scaffoldWidth = provider.localWidth;
             scaffoldHeight = provider.localHeight;
             return Container(
-              height: scaffoldHeight,
+              height: scaffoldHeight - 24,
               width: scaffoldWidth,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2382,7 +2374,7 @@ class IndexesPageState extends State<IndexesPage> {
                         ),
                         Expanded(
                             child: Padding(
-                          padding: EdgeInsets.only(left: 5),
+                          padding: EdgeInsets.only(left: 5, right: 10),
                           child: TextField(
                             onChanged: (text) {
                               provider.filterIndexedChannels();
@@ -2438,95 +2430,98 @@ class IndexesPageState extends State<IndexesPage> {
                               ),
                             ),
                           ))
-                      : SingleChildScrollView(
-                          child: Column(
-                            children: provider.displayIndexes
-                                .map((channel) {
-                                  return Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 5),
-                                    child: Container(
-                                      width: scaffoldWidth,
-                                      child: Card(
-                                        color: Theme.of(context).colorScheme.onPrimary,
-                                        clipBehavior: Clip.hardEdge,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
+                      : Container(
+                    height: scaffoldHeight - 109,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: provider.displayIndexes
+                            .map((channel) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 5),
+                            child: Container(
+                              width: scaffoldWidth,
+                              child: Card(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                clipBehavior: Clip.hardEdge,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    provider.currentChannel = provider.addedIndexes[channel["id"].toString()];
+                                    // provider.createGraph();
+                                    provider.retreiveFullChannelInfo(channel["id"]);
+                                    provider.confirmDelete = false;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10.0),
+                                          child: channel["picfile"] == "NOPIC"
+                                              ? Container(
+                                            color: Theme.of(context).colorScheme.primaryContainer,
+                                            width: 60,
+                                            height: 60,
+                                            child: Center(
+                                              child: Text(
+                                                channel["title"][0],
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                                              ),
+                                            ),
+                                          )
+                                              : Image.file(
+                                            File(channel["picfile"]),
+                                            width: 60,
+                                            height: 60,
+                                          ),
                                         ),
-                                        child: InkWell(
-                                          onTap: () {
-                                            provider.currentChannel = provider.addedIndexes[channel["id"].toString()];
-                                            // provider.createGraph();
-                                            provider.retreiveFullChannelInfo(channel["id"]);
-                                            provider.confirmDelete = false;
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(fullscreenDialog: true, builder: (context) => IndexPage()),
-                                            );
-                                          },
+                                        Container(
+                                          width: scaffoldWidth - 88,
                                           child: Padding(
-                                            padding: EdgeInsets.all(5),
-                                            child: Row(
+                                            padding: EdgeInsets.only(top: 0, left: 15, right: 5, bottom: 5),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.start,
                                               children: [
-                                                ClipRRect(
-                                                  borderRadius: BorderRadius.circular(10.0),
-                                                  child: channel["picfile"] == "NOPIC"
-                                                      ? Container(
-                                                          color: Theme.of(context).colorScheme.primaryContainer,
-                                                          width: 60,
-                                                          height: 60,
-                                                          child: Center(
-                                                            child: Text(
-                                                              channel["title"][0],
-                                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                                                            ),
-                                                          ),
-                                                        )
-                                                      : Image.file(
-                                                          File(channel["picfile"]),
-                                                          width: 60,
-                                                          height: 60,
-                                                        ),
+                                                Text(
+                                                  channel["title"],
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                                 ),
-                                                Container(
-                                                  width: scaffoldWidth - 88,
-                                                  child: Padding(
-                                                    padding: EdgeInsets.only(top: 0, left: 15, right: 5, bottom: 5),
-                                                    child: Column(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      mainAxisAlignment: MainAxisAlignment.start,
-                                                      children: [
-                                                        Text(
-                                                          channel["title"],
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                                        ),
-                                                        Text("@${channel["username"]}", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(height: 0.9, fontSize: 16)),
-                                                        channel.containsKey("donepercent")
-                                                            ? Padding(
-                                                                padding: EdgeInsets.only(top: 10),
-                                                                child: LinearProgressIndicator(
-                                                                  value: channel.containsKey("donepercent") ? channel["donepercent"] / 100 : 0,
-                                                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
-                                                                ),
-                                                              )
-                                                            : Container()
-                                                      ],
-                                                    ),
+                                                Text("@${channel["username"]}", maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(height: 0.9, fontSize: 16)),
+                                                channel.containsKey("donepercent")
+                                                    ? Padding(
+                                                  padding: EdgeInsets.only(top: 10),
+                                                  child: LinearProgressIndicator(
+                                                    value: channel.containsKey("donepercent") ? channel["donepercent"] / 100 : 0,
+                                                    borderRadius: const BorderRadius.all(Radius.circular(3)),
                                                   ),
                                                 )
+                                                    : Container()
                                               ],
                                             ),
                                           ),
-                                        ),
-                                      ),
+                                        )
+                                      ],
                                     ),
-                                  );
-                                })
-                                .toList()
-                                .cast<Widget>(),
-                          ),
-                        )
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        })
+                            .toList()
+                            .cast<Widget>(),
+                      ),
+                    ),
+                  )
                 ],
               ),
             );

@@ -88,5 +88,7 @@
   "indexed_relations": "Found relations",
   "developer_contact": "Developer contact",
   "constructing_graph": "Constructing graph",
-  "constructed_graph": "Graph constructed"
+  "constructed_graph": "Graph constructed",
+  "restart_tdlib_error_title": "Restarting app",
+  "restart_tdlib_error_desc": "Error while initializing TDLib: took too long"
 }

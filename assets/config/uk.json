@@ -87,5 +87,7 @@
   "indexed_relations": "Знайдено зв'язків",
   "developer_contact": "Зв'язок з розробником",
   "constructing_graph": "Генеруємо мапу",
-  "constructed_graph": "Мапу згенеровано"
+  "constructed_graph": "Мапу згенеровано",
+  "restart_tdlib_error_title": "Перезапускаємо додаток",
+  "restart_tdlib_error_desc": "Помилка ініціалізації TDLib: занадто довго"
 }
