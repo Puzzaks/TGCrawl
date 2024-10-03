@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:graphview/GraphView.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pretty_json/pretty_json.dart';
 import 'package:rxdart/rxdart.dart';
@@ -41,7 +42,6 @@ class tgProvider with ChangeNotifier {
   Map dictionary = {};
   String locale = "en";
   bool langReady = false;
-  double langState = 0.0;
   double loginState = 0.0;
   List introSequence = [];
   List introPair = [];
@@ -76,10 +76,24 @@ class tgProvider with ChangeNotifier {
   bool isAutoSaving = false;
   bool confirmDelete = false;
   bool loadingChannelData = false;
+  Map authors = {};
 
   int totalIndexed = 0;
   int totalReposts = 0;
   int totalRelations = 0;
+
+  Graph graph = Graph();
+
+  Map graphData = {
+    'vertexes': [],
+    'edges': [],
+  };
+  List graphConnections = [];
+  List graphDone = [];
+  List graphTotal = [];
+  bool graphConstructed = false;
+
+  Map displayChannel = {};
 
   void init() async {
     notifyListeners();
@@ -164,13 +178,11 @@ class tgProvider with ChangeNotifier {
 
   getConfigOnline() async {
     status = "Loading configuration...";
-    langState = 1 / (languages.length + 2);
     notifyListeners();
     final intros = await http.get(
       Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/intro.json"),
     );
     if(intros.statusCode == 200){
-      notifyListeners();
       introSequence = jsonDecode(intros.body);
       introPair.add(introSequence[introPosition]);
       introPair.add(introSequence[introPosition + 1]);
@@ -183,13 +195,11 @@ class tgProvider with ChangeNotifier {
         Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
       if(response.statusCode == 200){
-        langState = 2 / (languages.length + 4);
         notifyListeners();
         languages = jsonDecode(response.body);
         decideLanguage();
         for(int i=0; i < languages.length; i++){
           status = "Downloading ${languages[i]["name"]}";
-          langState = (languages.length + 2) / (i+2);
           notifyListeners();
           final languageGet = await http.get(
             Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
@@ -203,6 +213,16 @@ class tgProvider with ChangeNotifier {
       }else{
         getConfigOffline();
       }
+    status = "Loading authors...";
+    notifyListeners();
+    final authResponse = await http.get(
+      Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/authors.json"),
+    );
+    if(authResponse.statusCode == 200){
+      authors = jsonDecode(authResponse.body);
+    }else{
+      getConfigOffline();
+    }
     await Future.delayed(const Duration(milliseconds: 500));
     status = "Dictionary loaded!";
     langReady = true;
@@ -211,18 +231,14 @@ class tgProvider with ChangeNotifier {
   getConfigOffline() async {
     isOffline = true;
     status = "Loading configuration...";
-    langState = 1 / (languages.length + 2);
     notifyListeners();
     await rootBundle.loadString('assets/config/intro.json').then((introlist) async {
       introSequence = jsonDecode(introlist);
       introPair.add(introSequence[introPosition]);
       introPair.add(introSequence[introPosition + 1]);
-      langState = 2 / (languages.length + 2);
-      notifyListeners();
       for(int i=0; i < languages.length; i++){
         await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
           status = "Reading ${languages[i]["name"]}";
-          langState = (languages.length + 2) / (i+2);
           notifyListeners();
           dictionary[languages[i]["id"]] = jsonDecode(langentry);
         });
@@ -230,20 +246,21 @@ class tgProvider with ChangeNotifier {
     });
     status = "Loading dictionaries...";
     notifyListeners();
-      await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
+    await rootBundle.loadString('assets/config/languages.json').then((langlist) async {
         languages = jsonDecode(langlist);
         decideLanguage();
-        langState = 1 / (languages.length + 1);
         notifyListeners();
         for(int i=0; i < languages.length; i++){
           await rootBundle.loadString('assets/config/${languages[i]["id"]}.json').then((langentry) async {
             status = "Reading ${languages[i]["name"]}";
-            langState = (languages.length + 1) / (i+1);
             notifyListeners();
             dictionary[languages[i]["id"]] = jsonDecode(langentry);
           });
         }
       });
+    await rootBundle.loadString('assets/config/authors.json').then((authlist) async {
+      authors = jsonDecode(authlist);
+    });
     await Future.delayed(const Duration(milliseconds: 500));
     status = "Dictionary loaded!";
     langReady = true;
@@ -366,6 +383,7 @@ class tgProvider with ChangeNotifier {
                 if(update["messages"][0]["forward_info"]["origin"]["chat_id"] == null){}else{
                   totalReposts ++;
                   addRelationToChannel(currentChannel["id"],update["messages"][0]["forward_info"]["origin"]["chat_id"], update["messages"][0]);
+                  graphConnections.add(currentChannel["id"].toString());
                 }
               }
               gotNext = true;
@@ -383,7 +401,6 @@ class tgProvider with ChangeNotifier {
   resolveRelations() async {
     while(true){
       if(unresolvedRelations.isNotEmpty){
-        print("Channels to resolve: ${unresolvedRelations}");
         indexingStatus = "resolving_related_channel";
         notifyListeners();
         if(knownChannels.containsKey(unresolvedRelations[0])){
@@ -403,7 +420,6 @@ class tgProvider with ChangeNotifier {
   }
 
   saveAll() async {
-    print("AUTOSAVING");
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(currentChannel.isNotEmpty){
       await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
@@ -433,6 +449,57 @@ class tgProvider with ChangeNotifier {
       await Future.delayed(Duration(milliseconds: 100));
     }
   }
+
+  createGraph() async {
+    graph = Graph();
+    graphConstructed = false;
+    graphDone.clear();
+    graphTotal.clear();
+    graphConnections.add(addedIndexes.keys.toList()[0].toString());
+    graphTotal.add(addedIndexes.keys.toList()[0].toString());
+    notifyListeners();
+  }
+  buildEdge(from, to){
+    graph.addEdge(Node.Id(from), Node.Id(to),paint: Paint()..strokeWidth = 0.1..color = Theme.of(localContext).colorScheme.primary..strokeCap = StrokeCap.round);
+  }
+
+  iterateConnections() async {
+      while(true){
+        if(graphConnections.isNotEmpty) {
+          addConnections(graphConnections[0]);
+          graphConnections.removeAt(0);
+          notifyListeners();
+        }else{
+          if(graphConstructed == false){
+            graphConstructed = true;
+            notifyListeners();
+          }
+        }
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+  }
+
+  addConnections(channelRaw) async {
+    String channel = channelRaw.toString();
+    if(!graph.contains(node: Node.Id(channel)) && !graphDone.contains(channel)){
+      graph.addNode(Node.Id(channel)..size = Size(5,5));
+    }
+    if(addedIndexes.containsKey(channel)){
+      if(addedIndexes[channel].containsKey("relations")){
+        for(int i = 0; i < addedIndexes[channel]["relations"].length; i++){
+          String addedIndex = addedIndexes[channel]["relations"].keys.toList()[i].toString();
+            if(!(graph.contains(edge: Edge(Node.Id(channel), Node.Id(addedIndex))) && graph.contains(edge: Edge(Node.Id(addedIndex), Node.Id(channel))))){
+              buildEdge(channel, addedIndex);
+              graphTotal.add(addedIndex);
+              graphConnections.add(addedIndex);
+            }
+        }
+      }
+    }
+    graphDone.add(channel);
+    notifyListeners();
+  }
+
 
   addRelationToChannel(channelID, relatedChannelID, message) async {
     if(!currentChannel.containsKey("reposts")) {
@@ -695,9 +762,11 @@ class tgProvider with ChangeNotifier {
         notifyListeners();
         gotUser = true;
 
+        createGraph();
         getIndexing();
         resolveRelations();
         autoSave();
+        iterateConnections();
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
