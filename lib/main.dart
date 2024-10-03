@@ -2696,7 +2696,9 @@ class relationsMapState extends State<relationsMap> {
             }
             return Stack(
               children: [
-                Expanded(
+                Container(
+                  height: scaffoldHeight,
+                  width: scaffoldWidth,
                   child: InteractiveViewer(
                       constrained: false,
                       minScale: 0.0001,
