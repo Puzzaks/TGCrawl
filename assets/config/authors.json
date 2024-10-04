@@ -1,0 +1,48 @@
+{
+  "Authors":[
+    {
+      "Name": "Puzzak",
+      "Rank": "Main",
+      "Role": "Developer",
+      "Avatar": "puzzak_av.jpg",
+      "Links": [
+        {
+          "Title": "Threads (DevBlog)",
+          "Link": "https://threads.net/@puzzaks"
+        },
+        {
+          "Title": "GitHub",
+          "Link": "https://github.com/Puzzak"
+        },
+        {
+          "Title": "Website",
+          "Link": "https://puzzak.page"
+        },
+        {
+          "Title": "Play Store",
+          "Link": "https://play.google.com/store/apps/dev?id=8304874346039659820"
+        },
+        {
+          "Title": "Telegram",
+          "Link": "https://t.me/Puzzaks"
+        },
+        {
+          "Title": "LinkedIn",
+          "Link": "https://linkedin.com/in/puzzak/"
+        },
+        {
+          "Title": "Twitter/X",
+          "Link": "https://x.com/puzzaks"
+        },
+        {
+          "Title": "Reddit",
+          "Link": "https://reddit.com/u/Puzzak"
+        },
+        {
+          "Title": "YouTube",
+          "Link": "https://youtube.com/@puzzak"
+        }
+      ]
+    }
+  ]
+}

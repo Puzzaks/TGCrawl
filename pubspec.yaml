@@ -26,6 +26,9 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.1.2
   provider: ^6.0.5
+  pretty_json: ^2.0.0
+  graphview: ^1.2.0
+  restart_app: ^1.3.2
 
 
   flutter:
@@ -41,5 +44,11 @@ flutter:
 
   assets:
     - assets/config/languages.json
-    - assets/config/ua.json
+    - assets/config/authors.json
+    - assets/config/intro.json
+    - assets/config/uk.json
     - assets/config/en.json
+  fonts:
+    - family: Flow
+      fonts:
+        - asset: assets/fonts/FlowCircular-Regular.ttf
