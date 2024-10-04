@@ -858,29 +858,42 @@ class HomePageState extends State<HomePage> {
                           },
                           child: Padding(
                             padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                            child: Column(
+                            child: Row(
                               children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      provider.graphConstructed?provider.dict("constructed_graph"):provider.dict("constructing_graph"),
-                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(bottom: 5),
-                                      child: Text(
-                                          "${provider.graphDone.length.toString()} / ${provider.graphTotal.length.toString()}", style: TextStyle(fontSize: 16)
+                                Container(
+                                  width: scaffoldWidth - 88,
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            provider.graphConstructed?provider.dict("constructed_graph"):provider.dict("constructing_graph"),
+                                            style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.only(bottom: 5),
+                                            child: Text(
+                                                "${provider.graphDone.length.toString()} / ${provider.graphTotal.length.toString()}", style: TextStyle(fontSize: 16)
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      LinearProgressIndicator(
+                                        value: provider.graphDone.length == 0?1:provider.graphDone.length/provider.graphTotal.length,
+                                        borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                      )
+                                    ],
+                                  ),
                                 ),
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                LinearProgressIndicator(
-                                  value: provider.graphDone.length == 0?1:provider.graphDone.length/provider.graphTotal.length,
-                                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                                Padding(
+                                  padding: EdgeInsets.only(left:15),
+                                  child: Icon(
+                                    Icons.arrow_forward_ios_rounded
+                                  ),
                                 )
                               ],
                             ),
@@ -1397,6 +1410,60 @@ class SettingsPageState extends State<SettingsPage> {
                                 ),
                               ),
                             ),
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: InkWell(
+                                    onTap: (){
+                                      launchUrl(Uri.parse("https://github.com/Puzzak/tgcrawl"), mode: LaunchMode.externalApplication);
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: scaffoldWidth - 88,
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              mainAxisAlignment: MainAxisAlignment.start,
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      provider.dict("repo_title"),
+                                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                                    ),
+                                                    Padding(
+                                                      padding: EdgeInsets.only(bottom: 5),
+                                                      child: Text(
+                                                          provider.dict("repo_desc"), style: TextStyle(fontSize: 16)
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.only(left:15),
+                                            child: Icon(
+                                                Icons.arrow_forward_ios_rounded
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ))
                           ],
                         ),
                       ),
@@ -1665,7 +1732,7 @@ class IndexPageState extends State<IndexPage> {
             scaffoldWidth = provider.localWidth;
             scaffoldHeight = provider.localHeight;
             return Container(
-              height: scaffoldHeight - 23,
+              height: scaffoldHeight - 50,
               width: scaffoldWidth,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2121,10 +2188,7 @@ class IndexPageState extends State<IndexPage> {
                       secondChild: provider.currentChannel.containsKey("relations")
                           ? SingleChildScrollView(
                               child: Column(
-                                children: provider.currentChannel["relations"].keys
-                                    .toList()
-                                    .reversed
-                                    .map((relation) {
+                                children: provider.currentChannel["relations"].keys.toList().map((relation) {
                                       if (provider.knownChannels.containsKey(relation.toString())) {
                                         return Padding(
                                           padding: EdgeInsets.symmetric(horizontal: 5),
@@ -2717,10 +2781,10 @@ class relationsMapState extends State<relationsMap> {
                           Offset nodeOffset = Offset.zero;
                           Map channel = {};
                           if(provider.graphPairs.containsKey(a)){
-                            if(provider.graphPairs[a].length > 10){
-                              // nodeOffset = Offset(2.5,2.5);
-                            }else if(provider.graphPairs[a].length > 1){
+                            if(provider.graphPairs[a].length > 100){
                               nodeOffset = Offset(2.5,2.5);
+                            }else if(provider.graphPairs[a].length > 10){
+                              nodeOffset = Offset(0.5,0.5);
                             }
                           }
                           if(provider.currentChannel.isNotEmpty){
