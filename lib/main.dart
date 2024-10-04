@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
+import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tgcrawl/tgback.dart';
@@ -20,6 +21,10 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    WidgetsFlutterBinding.ensureInitialized();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<tgProvider>(context, listen: false).init();
+    });
     return HomeScreen();
   }
 }
@@ -29,10 +34,6 @@ class HomeScreen extends StatelessWidget {
   static final _defaultDarkColorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.teal, brightness: Brightness.dark);
   @override
   Widget build(BuildContext context) {
-    WidgetsFlutterBinding.ensureInitialized();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<tgProvider>(context, listen: false).init();
-    });
     return DynamicColorBuilder(builder: (lightColorScheme, darkColorScheme) {
       return MaterialApp(
           theme: ThemeData(
@@ -839,6 +840,7 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                   ), // indexing options
+                  provider.addedIndexes.isEmpty?Container():
                   Padding(
                       padding: EdgeInsets.symmetric(horizontal: 5),
                       child: Card(
@@ -1293,15 +1295,18 @@ class SettingsPageState extends State<SettingsPage> {
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  provider.dict(provider.crowdsource ? "sharing_enabled_title" : "sharing_disabled_title"),
-                                                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                                ),
-                                                Text(provider.dict("sharing_title"), style: TextStyle(fontSize: 16)),
-                                              ],
+                                            Container(
+                                              width: scaffoldWidth - 110,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    provider.dict(provider.crowdsource ? "sharing_enabled_title" : "sharing_disabled_title"),
+                                                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                                  ),
+                                                  Text(provider.dict("sharing_title"), style: TextStyle(fontSize: 16)),
+                                                ],
+                                              ),
                                             ),
                                             Switch(
                                               thumbIcon: shareicon,
@@ -1956,7 +1961,7 @@ class IndexPageState extends State<IndexPage> {
                                           height: 10,
                                         ),
                                         LinearProgressIndicator(
-                                          value: provider.currentChannel.containsKey("donepercent") ? provider.currentChannel["donepercent"] / 100 : 0,
+                                          value: provider.isAutoSaving? null : provider.currentChannel.containsKey("donepercent") ? provider.currentChannel["donepercent"] / 100 : 0,
                                           borderRadius: const BorderRadius.all(Radius.circular(3)),
                                         )
                                       ],
@@ -2710,11 +2715,26 @@ class relationsMapState extends State<relationsMap> {
                           var a = node.key?.value;
                           double nodeSize = 5;
                           Offset nodeOffset = Offset.zero;
+                          Map channel = {};
+                          if(provider.graphPairs.containsKey(a)){
+                            if(provider.graphPairs[a].length > 10){
+                              // nodeOffset = Offset(2.5,2.5);
+                            }else if(provider.graphPairs[a].length > 1){
+                              nodeOffset = Offset(2.5,2.5);
+                            }
+                          }
                           if(provider.currentChannel.isNotEmpty){
                             if(provider.currentChannel["id"].toString() == a.toString()){
                               nodeSize = 10;
-                              nodeOffset = Offset(1,1);
+                              nodeOffset = Offset(-2,-2);
                             }
+                          }
+                          if(provider.addedIndexes.containsKey(a)){
+                            channel = provider.addedIndexes[a];
+                          }else{
+                            print("Searching $a in");
+                            printPrettyJson(provider.knownChannels);
+                            channel = provider.knownChannels[a];
                           }
                           return Transform.translate(
                               offset: nodeOffset,
@@ -2734,20 +2754,20 @@ class relationsMapState extends State<relationsMap> {
 
                                     });
                                   },
-                                  child: (provider.knownChannels[a]["picfile"] == "NOPIC" || provider.knownChannels[a]["picfile"] == null)
+                                  child: (channel["picfile"] == "NOPIC" || channel["picfile"] == null)
                                       ? Container(
                                     color: Theme.of(context).colorScheme.primaryContainer,
                                     width: nodeSize,
                                     height: nodeSize,
                                     child: Center(
                                       child: Text(
-                                        provider.knownChannels[a]["title"].toString()[0],
+                                        channel["title"].toString()[0],
                                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: nodeSize / 2),
                                       ),
                                     ),
                                   )
                                       : Image.file(
-                                    File(provider.knownChannels[a]["picfile"]),
+                                    File(channel["picfile"]),
                                     width: nodeSize,
                                     height: nodeSize,
                                   ),

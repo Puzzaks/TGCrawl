@@ -90,6 +90,7 @@ class tgProvider with ChangeNotifier {
     'edges': [],
   };
   List graphConnections = [];
+  Map graphPairs = {};
   List graphDone = [];
   List graphTotal = [];
   bool graphConstructed = false;
@@ -123,11 +124,12 @@ class tgProvider with ChangeNotifier {
     }
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    if(kReleaseMode){
-      getConfigOnline();
-    }else{
-      getConfigOffline();
-    }
+    // if(kReleaseMode){
+    //   getConfigOnline();
+    // }else{
+    //   getConfigOffline();
+    // }
+    getConfigOnline();
     isFirstBoot = await prefs.getBool('first') ?? true;
     notifyListeners();
     if(!isFirstBoot){
@@ -220,6 +222,7 @@ class tgProvider with ChangeNotifier {
       );
       if(response.statusCode == 200){
         notifyListeners();
+        print(response.body);
         languages = jsonDecode(response.body);
         decideLanguage();
         for(int i=0; i < languages.length; i++){
@@ -292,18 +295,11 @@ class tgProvider with ChangeNotifier {
   }
 
   void startTdReceiveUpdates() async {
-    launchingSince = DateTime.now().add(Duration(seconds: 30));
     while (true) {
       if(doReadUpdates){
         var result = await tdReceive(1);
         _tdReceiveSubject.add(result);
         await Future.delayed(Duration(milliseconds: 100));
-        if(DateTime.now().isAfter(launchingSince)){
-          Restart.restartApp(
-              notificationTitle: dict("restart_tdlib_error_title"),
-              notificationBody: dict("restart_tdlib_error_desc")
-          );
-        }
       }else{
         await Future.delayed(Duration(milliseconds: 100));
       }
@@ -486,8 +482,11 @@ class tgProvider with ChangeNotifier {
     graphConstructed = false;
     graphDone.clear();
     graphTotal.clear();
-    graphConnections.add(addedIndexes.keys.toList()[0].toString());
-    graphTotal.add(addedIndexes.keys.toList()[0].toString());
+    graphPairs.clear();
+    if(addedIndexes.isNotEmpty){
+      graphConnections.add(addedIndexes.keys.toList()[0].toString());
+      graphTotal.add(addedIndexes.keys.toList()[0].toString());
+    }
     notifyListeners();
   }
   buildEdge(from, to){
@@ -496,15 +495,21 @@ class tgProvider with ChangeNotifier {
 
   iterateConnections() async {
       while(true){
-        if(graphConnections.isNotEmpty) {
-          addConnections(graphConnections[0]);
-          graphConnections.removeAt(0);
-          notifyListeners();
-        }else{
-          if(graphConstructed == false){
-            graphConstructed = true;
+        if(!isIndexing){
+          if(graphConnections.isNotEmpty) {
+            addConnections(graphConnections[0]);
+            graphConnections.removeAt(0);
+            graphConstructed = false;
             notifyListeners();
+          }else{
+            if(graphConstructed == false){
+              graphConstructed = true;
+              notifyListeners();
+              await Future.delayed(Duration(milliseconds: 100));
+            }
           }
+        }else{
+          await Future.delayed(Duration(milliseconds: 100));
         }
         await Future.delayed(Duration(milliseconds: 100));
       }
@@ -514,6 +519,9 @@ class tgProvider with ChangeNotifier {
     String channel = channelRaw.toString();
     if(!graph.contains(node: Node.Id(channel)) && !graphDone.contains(channel)){
       graph.addNode(Node.Id(channel)..size = Size(5,5));
+      if(!graphPairs.containsKey(channel)){
+        graphPairs[channel] = [];
+      }
     }
     if(addedIndexes.containsKey(channel)){
       if(addedIndexes[channel].containsKey("relations")){
@@ -523,6 +531,10 @@ class tgProvider with ChangeNotifier {
               buildEdge(channel, addedIndex);
               graphTotal.add(addedIndex);
               graphConnections.add(addedIndex);
+              if(!graphPairs.containsKey(channel)){
+                graphPairs[channel] = [];
+              }
+              graphPairs[channel].add(addedIndex);
             }
         }
       }
@@ -782,6 +794,7 @@ class tgProvider with ChangeNotifier {
   }
 
   Future<void> launch () async {
+    launchingSince = DateTime.now().add(Duration(seconds: 30));
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     await TdPlugin.initialize(tdlibPath);
@@ -789,6 +802,12 @@ class tgProvider with ChangeNotifier {
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
       var update = updateRaw?.toJson().cast<dynamic, dynamic>();
       if(!(update == null)){
+        if(DateTime.now().isAfter(launchingSince) && !isLoggedIn){
+          Restart.restartApp(
+              notificationTitle: dict("restart_tdlib_error_title"),
+              notificationBody: dict("restart_tdlib_error_desc")
+          );
+        }
         notifyListeners();
         switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
           case "updateOption":
