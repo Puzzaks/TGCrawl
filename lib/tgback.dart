@@ -72,7 +72,7 @@ class tgProvider with ChangeNotifier {
   Map knownChannels = {};
   int maxFailsBeforeRetry = 10;
   String indexingStatus = "ready_to_index";
-  int autoSaveSeconds = 15;
+  int autoSaveSeconds = 30;
   DateTime nextAutoSave = DateTime.now();
   bool isAutoSaving = false;
   bool confirmDelete = false;
@@ -135,7 +135,7 @@ class tgProvider with ChangeNotifier {
     if(!isFirstBoot){
       readIndexedChannels();
       crowdsource = await prefs.getBool('crowdsource') ?? false;
-      autoSaveSeconds = await prefs.getInt('autoSaveSeconds') ?? 15;
+      autoSaveSeconds = await prefs.getInt('autoSaveSeconds') ?? 30;
       systemLanguage = await prefs.getBool('systemLanguage') ?? false;
       totalIndexed = await prefs.getInt('totalIndexed') ?? 0;
       totalReposts = await prefs.getInt('totalReposts') ?? 0;
@@ -221,9 +221,11 @@ class tgProvider with ChangeNotifier {
         Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
       );
       if(response.statusCode == 200){
-        notifyListeners();
-        print(response.body);
-        languages = jsonDecode(response.body);
+        try {
+          languages = jsonDecode(response.body);
+        }catch(e){
+          getConfigOffline();
+        }
         decideLanguage();
         for(int i=0; i < languages.length; i++){
           status = "Downloading ${languages[i]["name"]}";
@@ -232,7 +234,11 @@ class tgProvider with ChangeNotifier {
             Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
           );
           if(response.statusCode == 200){
+            try{
             dictionary[languages[i]["id"]] = jsonDecode(languageGet.body);
+            }catch(e){
+              getConfigOffline();
+            }
           }else{
             getConfigOffline();
           }
@@ -246,7 +252,11 @@ class tgProvider with ChangeNotifier {
       Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/authors.json"),
     );
     if(authResponse.statusCode == 200){
+      try{
       authors = jsonDecode(authResponse.body);
+      }catch(e){
+        getConfigOffline();
+      }
     }else{
       getConfigOffline();
     }
@@ -390,7 +400,7 @@ class tgProvider with ChangeNotifier {
         indexingStatus = "reading_channel";
         notifyListeners();
         gotNext = false;
-        tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 1, onlyLocal: false));
+        tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 50, onlyLocal: false));
         while (!gotNext) {
           var update = await tdReceive(1)?.toJson()??{};
           if(update["@type"] == "messages"){
@@ -401,17 +411,20 @@ class tgProvider with ChangeNotifier {
               currentChannel["donepercent"] = 100;
               notifyListeners();
             }else{
-              totalIndexed ++;
-              currentChannel["donepercent"] = (((currentChannel.containsKey("lastindexedid") ? currentChannel["lastindexedid"] : 0)/(currentChannel.containsKey("lastmsgid") ? int.parse(currentChannel["lastmsgid"]) : 0)) * 100);
-              currentChannel["isDone"] = false;
-              currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
-              currentChannel["lastindexed"] = update["messages"][0]["id"];
-              if(update["messages"][0]["forward_info"] == null){}else{
-                if(update["messages"][0]["forward_info"]["origin"]["chat_id"] == null){}else{
-                  totalReposts ++;
-                  addRelationToChannel(currentChannel["id"],update["messages"][0]["forward_info"]["origin"]["chat_id"], update["messages"][0]);
-                  graphConnections.add(currentChannel["id"].toString());
+              for(int m = 0;m < update["messages"].length;m++){
+                totalIndexed ++;
+                currentChannel["donepercent"] = (((currentChannel.containsKey("lastindexedid") ? currentChannel["lastindexedid"] : 0)/(currentChannel.containsKey("lastmsgid") ? int.parse(currentChannel["lastmsgid"]) : 0)) * 100);
+                currentChannel["isDone"] = false;
+                currentChannel["lastindexedid"] = currentChannel.containsKey("lastindexedid")?currentChannel["lastindexedid"]+1:1;
+                currentChannel["lastindexed"] = update["messages"][m]["id"];
+                if(update["messages"][m]["forward_info"] == null){}else{
+                  if(update["messages"][m]["forward_info"]["origin"]["chat_id"] == null){}else{
+                    totalReposts ++;
+                    addRelationToChannel(currentChannel["id"], update["messages"][m]["forward_info"]["origin"]["chat_id"], update["messages"][m]);
+                    graphConnections.add(currentChannel["id"].toString());
+                  }
                 }
+                notifyListeners();
               }
               gotNext = true;
               notifyListeners();
@@ -426,6 +439,7 @@ class tgProvider with ChangeNotifier {
     }
   }
   resolveRelations() async {
+    bool saved = false;
     while(true){
       if(unresolvedRelations.isNotEmpty){
         indexingStatus = "resolving_related_channel";
@@ -435,12 +449,15 @@ class tgProvider with ChangeNotifier {
             unresolvedRelations.removeAt(0);
           }
         }else{
+          saved = false;
           await retreiveFullRelatedChannelInfo(unresolvedRelations[0]);
           unresolvedRelations.removeAt(0);
-          saveAll();
         }
       }else{
-        await Future.delayed(Duration(milliseconds: 100));
+        if(!saved){
+          saveAll();
+          saved = true;
+        }
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -498,9 +515,12 @@ class tgProvider with ChangeNotifier {
         if(!isIndexing){
           if(graphConnections.isNotEmpty) {
             addConnections(graphConnections[0]);
-            graphConnections.removeAt(0);
             graphConstructed = false;
             notifyListeners();
+            if(!addedIndexes.containsKey(graphConnections[0].toString()) && !knownChannels.containsKey(graphConnections[0].toString())){
+              unresolvedRelations.add(graphConnections[0].toString());
+            }
+            graphConnections.removeAt(0);
           }else{
             if(graphConstructed == false){
               graphConstructed = true;

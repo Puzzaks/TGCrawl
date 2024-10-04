@@ -1190,9 +1190,9 @@ class SettingsPageState extends State<SettingsPage> {
                                           ),
                                           child: Slider(
                                             value: provider.autoSaveSeconds.toDouble(),
-                                            min: 10,
-                                            max: 100,
-                                            divisions: 9,
+                                            min: 30,
+                                            max: 180,
+                                            divisions: 8,
                                             label: provider.dict("settings_autosave_duration_tip").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
                                             onChangeEnd: (value) {
                                               provider.saveAll();
@@ -1665,7 +1665,7 @@ class IndexPageState extends State<IndexPage> {
             scaffoldWidth = provider.localWidth;
             scaffoldHeight = provider.localHeight;
             return Container(
-              height: scaffoldHeight,
+              height: scaffoldHeight - 23,
               width: scaffoldWidth,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2731,10 +2731,16 @@ class relationsMapState extends State<relationsMap> {
                           }
                           if(provider.addedIndexes.containsKey(a)){
                             channel = provider.addedIndexes[a];
-                          }else{
-                            print("Searching $a in");
-                            printPrettyJson(provider.knownChannels);
+                          }else if(provider.knownChannels.containsKey(a)){
                             channel = provider.knownChannels[a];
+                          }else{
+                            provider.unresolvedRelations.add(a.toString());
+                            channel = {
+                              "id": a.toString(),
+                              "title": "Error",
+                              "picfile": "NOPIC",
+                              "username": "deleted"
+                            };
                           }
                           return Transform.translate(
                               offset: nodeOffset,
