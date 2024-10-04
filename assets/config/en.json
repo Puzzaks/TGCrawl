@@ -91,5 +91,7 @@
   "constructed_graph": "Graph constructed",
   "restart_tdlib_error_title": "Restarting app",
   "restart_tdlib_error_desc": "Error while initializing TDLib: took too long",
-  "notification_desc": "This notification keeps the app alive in background :)"
+  "notification_desc": "This notification keeps the app alive in background :)",
+  "repo_title": "Source code",
+  "repo_desc": "App's GitHub repository"
 }

@@ -90,5 +90,7 @@
   "constructed_graph": "Мапу згенеровано",
   "restart_tdlib_error_title": "Перезапускаємо додаток",
   "restart_tdlib_error_desc": "Помилка ініціалізації TDLib: занадто довго",
-  "notification_desc": "Це сповіщення потрібне для роботи додатку у фоні :)"
+  "notification_desc": "Це сповіщення потрібне для роботи додатку у фоні :)",
+  "repo_title": "Вихідний код",
+  "repo_desc": "Репозиторій додатку на GitHub"
 }
