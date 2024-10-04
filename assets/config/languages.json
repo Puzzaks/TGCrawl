@@ -1,14 +1,17 @@
 [
   {
+    "origin": "English",
     "name": "English",
     "id": "en"
   },
   {
-    "name": "Українська",
-    "id": "ua"
+    "origin": "Українська",
+    "name": "Ukrainian",
+    "id": "uk"
   },
   {
-    "name": "polski",
+    "origin": "polski",
+    "name": "Polish",
     "id": "pl"
-  }
+  },
 ]
