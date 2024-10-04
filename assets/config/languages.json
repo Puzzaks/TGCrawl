@@ -8,5 +8,10 @@
     "origin": "Українська",
     "name": "Ukrainian",
     "id": "uk"
-  }
+  },
+  {
+    "origin": "polski",
+    "name": "Polish",
+    "id": "pl"
+  },
 ]
