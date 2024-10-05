@@ -814,7 +814,7 @@ class tgProvider with ChangeNotifier {
   }
 
   Future<void> launch () async {
-    launchingSince = DateTime.now().add(Duration(seconds: 30));
+    bool timerSet = false;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     await TdPlugin.initialize(tdlibPath);
@@ -822,7 +822,11 @@ class tgProvider with ChangeNotifier {
     _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
       var update = updateRaw?.toJson().cast<dynamic, dynamic>();
       if(!(update == null)){
-        if(DateTime.now().isAfter(launchingSince) && !isLoggedIn){
+        if(!timerSet){
+          timerSet = true;
+          launchingSince = DateTime.now().add(Duration(seconds: 30));
+        }
+        if(DateTime.now().isAfter(launchingSince) && !isLoggedIn && !isFirstBoot){
           Restart.restartApp(
               notificationTitle: dict("restart_tdlib_error_title"),
               notificationBody: dict("restart_tdlib_error_desc")
