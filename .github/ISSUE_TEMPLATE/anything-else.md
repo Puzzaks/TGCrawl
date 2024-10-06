@@ -1,6 +1,6 @@
 ---
 name: Anything else
-about: If none above fit
+about: If no other template fits your issue
 title: ''
 labels: ''
 assignees: ''
