@@ -6,6 +6,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pretty_json/pretty_json.dart';
@@ -97,7 +98,6 @@ class tgProvider with ChangeNotifier {
 
   Map displayChannel = {};
 
-  DateTime launchingSince = DateTime.now();
 
   void init() async {
     if (Platform.isAndroid) {
@@ -124,11 +124,6 @@ class tgProvider with ChangeNotifier {
     }
     notifyListeners();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    // if(kReleaseMode){
-    //   getConfigOnline();
-    // }else{
-    //   getConfigOffline();
-    // }
     getConfigOnline();
     isFirstBoot = await prefs.getBool('first') ?? true;
     notifyListeners();
@@ -148,20 +143,16 @@ class tgProvider with ChangeNotifier {
   decideLanguage() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(prefs.containsKey("language")){
-      print("saved language found");
       locale = await prefs.getString("language")??"en";
     }else{
-      print("saved language not found");
       setSystemLanguage();
     }
   }
   setSystemLanguage() async {
     String deviceLocale = Platform.localeName.split("_")[0];
     for(int a = 0; a < languages.length;a++){
-      print("comparing local language $locale to known ${languages[a]["id"]}");
       if(languages[a]["id"] == deviceLocale){
         locale = deviceLocale;
-        print("setting language $locale");
       }
     }
   }
@@ -206,7 +197,7 @@ class tgProvider with ChangeNotifier {
     status = "Loading configuration...";
     notifyListeners();
     final intros = await http.get(
-      Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/intro.json"),
+      Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/intro.json"),
     );
     if(intros.statusCode == 200){
       introSequence = jsonDecode(intros.body);
@@ -218,7 +209,7 @@ class tgProvider with ChangeNotifier {
     status = "Loading dictionaries...";
     notifyListeners();
       final response = await http.get(
-        Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/languages.json"),
+        Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/languages.json"),
       );
       if(response.statusCode == 200){
         try {
@@ -231,7 +222,7 @@ class tgProvider with ChangeNotifier {
           status = "Downloading ${languages[i]["name"]}";
           notifyListeners();
           final languageGet = await http.get(
-            Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
+            Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
           );
           if(response.statusCode == 200){
             try{
@@ -249,7 +240,7 @@ class tgProvider with ChangeNotifier {
     status = "Loading authors...";
     notifyListeners();
     final authResponse = await http.get(
-      Uri.parse("https://raw.githubusercontent.com/Puzzak/tgcrawl/master/assets/config/authors.json"),
+      Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/authors.json"),
     );
     if(authResponse.statusCode == 200){
       try{
@@ -368,6 +359,9 @@ class tgProvider with ChangeNotifier {
     bool gotPic = false;
     while (!gotPic) {
       var update = await tdReceive(1)?.toJson()??{};
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "file"){
         gotPic = true;
         return update["local"]["path"];
@@ -381,11 +375,13 @@ class tgProvider with ChangeNotifier {
     bool gotMsgData = false;
     tdSend(_clientId, tdApi.GetMessageLink(chatId: channelID,messageId: lastMessageID, mediaTimestamp: 0, forAlbum: true, inMessageThread: false));
     while (!gotMsgData) {
-      var update2 = (await tdReceive(1)?.toJson())!;
-      if(update2["@type"] == "messageLink"){
-        gotMsgData = true;
-        currentChannel["lastmsgid"] =  update2["link"].replaceAll("https://t.me/","").split("/")[1];
-        notifyListeners();
+      var update = (await tdReceive(1)?.toJson())!;
+      if(!(update == null)){
+        if(update["@type"] == "messageLink"){
+          gotMsgData = true;
+          currentChannel["lastmsgid"] =  update["link"].replaceAll("https://t.me/","").split("/")[1];
+          notifyListeners();
+        }
       }
       await Future.delayed(Duration(milliseconds: 100));
     }
@@ -403,6 +399,9 @@ class tgProvider with ChangeNotifier {
         tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 50, onlyLocal: false));
         while (!gotNext) {
           var update = await tdReceive(1)?.toJson()??{};
+          if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+            PANIC();
+          }
           if(update["@type"] == "messages"){
             if(update["total_count"] == 0){
               isIndexing = false;
@@ -464,6 +463,7 @@ class tgProvider with ChangeNotifier {
   }
 
   saveAll() async {
+    print("========= STATE: SAVING =========");
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     if(currentChannel.isNotEmpty){
       await updateIndexedChannels(currentChannel["id"].toString(), currentChannel);
@@ -585,13 +585,6 @@ class tgProvider with ChangeNotifier {
         unresolvedRelations.add(message["forward_info"]["origin"]["chat_id"].toString());
       }else{
         Map relation = knownChannels[message["forward_info"]["origin"]["chat_id"].toString()];
-        if(relation.containsKey("subs") && relation.containsKey("username") && relation.containsKey("picfile") && relation.containsKey("supergroupid") && relation.containsKey("title") && relation.containsKey("id")){
-          print("I know this channel:");
-          printPrettyJson(knownChannels[message["forward_info"]["origin"]["chat_id"].toString()]);
-        }else{
-          print("I DON'T know this channel:");
-          printPrettyJson(knownChannels[message["forward_info"]["origin"]["chat_id"].toString()]);
-        }
       }
     }
     await updateIndexedChannels(currentChannel["id"], currentChannel);
@@ -602,8 +595,9 @@ class tgProvider with ChangeNotifier {
     bool gotMsgs = false;
     while (!gotMsgs) {
       var update = await tdReceive(1)?.toJson()??{};
-      print("GetSupergroup:");
-      printPrettyJson(update);
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "supergroup"){
         gotMsgs = true;
         currentChannel["username"] = update["usernames"]["editable_username"];
@@ -619,13 +613,13 @@ class tgProvider with ChangeNotifier {
     bool gotMsgs = false;
     while (!gotMsgs) {
       if(failCounter > maxFailsBeforeRetry){
-        print("Related Username and Subs were not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
         gotMsgs = true;
         unresolvedRelations.add(relationID.toString());
       }
       var update = await tdReceive(1)?.toJson()??{};
-      print("GetRelatedSupergroup: ${superID}");
-      printPrettyJson(update);
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "supergroup"){
         gotMsgs = true;
         if(update["usernames"] == null){
@@ -648,13 +642,13 @@ class tgProvider with ChangeNotifier {
     tdSend(_clientId, tdApi.GetChat(chatId: int.parse(id)));
     while (!gotChat) {
       if(failCounter > maxFailsBeforeRetry){
-        print("Related Channel was not resolved in $maxFailsBeforeRetry tries, adding it to unresolved to try later.");
         unresolvedRelations.add(id);
         gotChat = true;
       }
       var update = await tdReceive(1)?.toJson()??{};
-      print("GetRelatedChat ($id):");
-      printPrettyJson(update);
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "chat"){
         gotChat = true;
         if(!knownChannels.containsKey(update["id"].toString())){
@@ -684,8 +678,9 @@ class tgProvider with ChangeNotifier {
     bool gotChat = false;
     while (!gotChat) {
       var update = await tdReceive(1)?.toJson()??{};
-      print("GetChat:");
-      printPrettyJson(update);
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "chat"){
         currentChannel["supergroupid"] = update["type"]["supergroup_id"];
         gotChat = true;
@@ -790,9 +785,11 @@ class tgProvider with ChangeNotifier {
     bool gotUser = false;
     while (!gotUser) {
       var update = await tdReceive(1)?.toJson()??{};
+      if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+        PANIC();
+      }
       if(update["@type"] == "user"){
         userData = update;
-        printPrettyJson(userData);
         if(update["profile_photo"] == null){
           userPic = "NOPIC";
         }else{
@@ -813,29 +810,30 @@ class tgProvider with ChangeNotifier {
     }
   }
 
+  PANIC() async {
+    await Fluttertoast.showToast(
+      msg: "Fatal TDLib error, open the app again please.",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+    );
+    exit(0);
+  }
+
   Future<void> launch () async {
-    bool timerSet = false;
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final tdlibPath = (Platform.isAndroid || Platform.isLinux || Platform.isWindows) ? 'libtdjson.so' : null;
     await TdPlugin.initialize(tdlibPath);
     _clientId = tdCreate();
-    _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) {
+    TdPlugin.instance.removeLogMessageCallback();
+    _tdReceiveSubscription = _tdReceiveSubject.stream.listen((updateRaw) async {
       var update = updateRaw?.toJson().cast<dynamic, dynamic>();
-      if(!(update == null)){
-        if(!timerSet){
-          timerSet = true;
-          launchingSince = DateTime.now().add(Duration(seconds: 30));
+      if(!(update == null)) {
+        if (updateRaw.toJson().toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
+          PANIC();
         }
-        if(DateTime.now().isAfter(launchingSince) && !isLoggedIn && !isFirstBoot){
-          Restart.restartApp(
-              notificationTitle: dict("restart_tdlib_error_title"),
-              notificationBody: dict("restart_tdlib_error_desc")
-          );
-        }
-        notifyListeners();
-        switch (jsonDecode(jsonify(raw: update.toString()))["@type"]){
+        switch (jsonDecode(jsonify(raw: update.toString()))["@type"]) {
           case "updateOption":
-            if(jsonDecode(jsonify(raw: update.toString()))["name"].toString() == "my_id"){
+            if (jsonDecode(jsonify(raw: update.toString()))["name"].toString() == "my_id") {
               userID = int.parse(jsonDecode(jsonify(raw: update.toString()))["value"]["value"]);
               notifyListeners();
             }
@@ -848,7 +846,7 @@ class tgProvider with ChangeNotifier {
             notifyListeners();
             break;
           case "updateAuthorizationState":
-            switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]){
+            switch (jsonDecode(jsonify(raw: update.toString()))["authorization_state"]["@type"]) {
               case "authorizationStateWaitPassword":
                 loginState = 0.75;
                 isWaitingPassword = true;
@@ -886,7 +884,7 @@ class tgProvider with ChangeNotifier {
                 break;
             }
             break;
-        }
+      }
         updates.insert(0, update);
         notifyListeners();
       }
