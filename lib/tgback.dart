@@ -98,6 +98,8 @@ class tgProvider with ChangeNotifier {
 
   Map displayChannel = {};
 
+  bool isTablet = false;
+
 
   void init() async {
     if (Platform.isAndroid) {

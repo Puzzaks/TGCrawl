@@ -55,6 +55,9 @@ class HomeScreen extends StatelessWidget {
                   provider.localContext = context;
                   provider.localWidth = scaffoldWidth;
                   provider.localHeight = scaffoldHeight;
+                  provider.isTablet = MediaQuery.of(context).size.width > 600;
+                  print("TABLET: ${provider.isTablet}");
+
                   return provider.langReady
                       ? AnimatedCrossFade(
                           alignment: Alignment.center,
