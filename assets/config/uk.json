@@ -92,5 +92,8 @@
   "restart_tdlib_error_desc": "Помилка ініціалізації TDLib: занадто довго",
   "notification_desc": "Це сповіщення потрібне для роботи додатку у фоні :)",
   "repo_title": "Вихідний код",
-  "repo_desc": "Репозиторій додатку на GitHub"
+  "repo_desc": "Репозиторій додатку на GitHub",
+  "settings_batches_title": "Завантаження повідомлень",
+  "settings_batches_desc": "Запитувати (messages) повідомлень за раз",
+  "settings_batches_tip" : "(messages)"
 }
