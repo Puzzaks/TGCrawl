@@ -1213,10 +1213,10 @@ class SettingsPageState extends State<SettingsPage> {
                                                 divisions: 8,
                                                 label: provider.dict("settings_autosave_duration_tip").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
                                                 onChangeEnd: (value) {
-                                                  provider.saveAll();
                                                   setState(() {
                                                     provider.autoSaveSeconds = value.toInt();
                                                   });
+                                                  provider.saveAll();
                                                 },
                                                 onChanged: (double value) {},
                                               ),
@@ -1244,7 +1244,7 @@ class SettingsPageState extends State<SettingsPage> {
                                           provider.dict("settings_batches_title"),
                                           style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                         ),
-                                        Text(provider.dict("settings_batches_desc").replaceAll("(MESSAGES)", provider.autoSaveSeconds.toString()), style: TextStyle(fontSize: 16)),
+                                        Text(provider.dict("settings_batches_desc").replaceAll("(MESSAGES)", provider.messageBatchSize.toString()), style: TextStyle(fontSize: 16)),
                                         SizedBox(
                                           height: 10,
                                         ),
@@ -1263,10 +1263,10 @@ class SettingsPageState extends State<SettingsPage> {
                                                 divisions: 10,
                                                 label: provider.dict("settings_batches_tip").replaceAll("(MESSAGES)", provider.messageBatchSize.toString()),
                                                 onChangeEnd: (value) {
-                                                  provider.saveAll();
                                                   setState(() {
-                                                    provider.autoSaveSeconds = value.toInt();
+                                                    provider.messageBatchSize = value.toInt();
                                                   });
+                                                  provider.saveAll();
                                                 },
                                                 onChanged: (double value) {},
                                               ),

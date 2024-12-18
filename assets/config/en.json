@@ -95,6 +95,6 @@
   "repo_title": "Source code",
   "repo_desc": "App's GitHub repository",
   "settings_batches_title": "Request amount",
-  "settings_batches_desc": "Request (MESSAGES) messages at once",
+  "settings_batches_desc": "Request (MESSAGES) messages at once\nMore = faster, less = smoother",
   "settings_batches_tip" : "(MESSAGES)"
 }

@@ -198,10 +198,11 @@ class tgProvider with ChangeNotifier {
 
 
   getConfigOnline() async {
+    var remoteAssets = "https://raw.githubusercontent.com/Puzzaks/tgcrawl/dev/assets/config";
     status = "Loading configuration...";
     notifyListeners();
     final intros = await http.get(
-      Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/intro.json"),
+      Uri.parse("$remoteAssets/intro.json"),
     );
     if(intros.statusCode == 200){
       introSequence = jsonDecode(intros.body);
@@ -213,7 +214,7 @@ class tgProvider with ChangeNotifier {
     status = "Loading dictionaries...";
     notifyListeners();
       final response = await http.get(
-        Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/languages.json"),
+        Uri.parse("$remoteAssets/languages.json"),
       );
       if(response.statusCode == 200){
         try {
@@ -226,7 +227,7 @@ class tgProvider with ChangeNotifier {
           status = "Downloading ${languages[i]["name"]}";
           notifyListeners();
           final languageGet = await http.get(
-            Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
+            Uri.parse("$remoteAssets/${languages[i]["id"]}.json"),
           );
           if(response.statusCode == 200){
             try{
