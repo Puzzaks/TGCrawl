@@ -94,6 +94,6 @@
   "repo_title": "Вихідний код",
   "repo_desc": "Репозиторій додатку на GitHub",
   "settings_batches_title": "Завантаження повідомлень",
-  "settings_batches_desc": "Запитувати (messages) повідомлень за раз",
-  "settings_batches_tip" : "(messages)"
+  "settings_batches_desc": "Запитувати (MESSAGES) повідомлень за раз",
+  "settings_batches_tip" : "(MESSAGES)"
 }
