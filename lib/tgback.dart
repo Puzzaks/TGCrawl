@@ -74,6 +74,7 @@ class tgProvider with ChangeNotifier {
   int maxFailsBeforeRetry = 10;
   String indexingStatus = "ready_to_index";
   int autoSaveSeconds = 30;
+  int messageBatchSize = 50; //per TDLib limits it should be in the range of [1-50]
   DateTime nextAutoSave = DateTime.now();
   bool isAutoSaving = false;
   bool confirmDelete = false;
@@ -97,6 +98,8 @@ class tgProvider with ChangeNotifier {
   bool graphConstructed = false;
 
   Map displayChannel = {};
+
+  bool isTablet = false;
 
 
   void init() async {
@@ -131,6 +134,7 @@ class tgProvider with ChangeNotifier {
       readIndexedChannels();
       crowdsource = await prefs.getBool('crowdsource') ?? false;
       autoSaveSeconds = await prefs.getInt('autoSaveSeconds') ?? 30;
+      messageBatchSize = await prefs.getInt('messageBatchSize') ?? 50;
       systemLanguage = await prefs.getBool('systemLanguage') ?? false;
       totalIndexed = await prefs.getInt('totalIndexed') ?? 0;
       totalReposts = await prefs.getInt('totalReposts') ?? 0;
@@ -194,10 +198,11 @@ class tgProvider with ChangeNotifier {
 
 
   getConfigOnline() async {
+    var remoteAssets = "https://raw.githubusercontent.com/Puzzaks/tgcrawl/dev/assets/config";
     status = "Loading configuration...";
     notifyListeners();
     final intros = await http.get(
-      Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/intro.json"),
+      Uri.parse("$remoteAssets/intro.json"),
     );
     if(intros.statusCode == 200){
       introSequence = jsonDecode(intros.body);
@@ -209,7 +214,7 @@ class tgProvider with ChangeNotifier {
     status = "Loading dictionaries...";
     notifyListeners();
       final response = await http.get(
-        Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/languages.json"),
+        Uri.parse("$remoteAssets/languages.json"),
       );
       if(response.statusCode == 200){
         try {
@@ -222,7 +227,7 @@ class tgProvider with ChangeNotifier {
           status = "Downloading ${languages[i]["name"]}";
           notifyListeners();
           final languageGet = await http.get(
-            Uri.parse("https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config/${languages[i]["id"]}.json"),
+            Uri.parse("$remoteAssets/${languages[i]["id"]}.json"),
           );
           if(response.statusCode == 200){
             try{
@@ -396,7 +401,7 @@ class tgProvider with ChangeNotifier {
         indexingStatus = "reading_channel";
         notifyListeners();
         gotNext = false;
-        tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: 50, onlyLocal: false));
+        tdSend(_clientId, tdApi.GetChatHistory(chatId: currentChannel["id"], fromMessageId: currentChannel.containsKey("lastindexed")?currentChannel["lastindexed"]:0, offset: 0, limit: messageBatchSize, onlyLocal: false));
         while (!gotNext) {
           var update = await tdReceive(1)?.toJson()??{};
           if (update.toString().contains('{@type: error, code: 400, message: Can\'t lock file')) {
@@ -476,6 +481,7 @@ class tgProvider with ChangeNotifier {
     prefs.setString("language", locale);
     prefs.setBool("systemLanguage", systemLanguage);
     prefs.setInt("autoSaveSeconds", autoSaveSeconds);
+    prefs.setInt("messageBatchSize", messageBatchSize);
     prefs.setString("addedIndexes", jsonEncode(addedIndexes));
     prefs.setString("knownChannels", jsonEncode(knownChannels));
   }

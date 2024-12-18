@@ -55,6 +55,9 @@ class HomeScreen extends StatelessWidget {
                   provider.localContext = context;
                   provider.localWidth = scaffoldWidth;
                   provider.localHeight = scaffoldHeight;
+                  provider.isTablet = MediaQuery.of(context).size.width > 600;
+                  print("TABLET: ${provider.isTablet}");
+
                   return provider.langReady
                       ? AnimatedCrossFade(
                           alignment: Alignment.center,
@@ -1195,31 +1198,84 @@ class SettingsPageState extends State<SettingsPage> {
                                         SizedBox(
                                           height: 10,
                                         ),
-                                        SliderTheme(
-                                          data: SliderThemeData(
-                                            overlayShape: SliderComponentShape.noOverlay,
-                                            trackShape: EdgeToEdgeTrackShape(),
-                                            thumbShape: RoundedThumbShape(enabledThumbRadius: 8.0),
-                                          ),
-                                          child: Slider(
-                                            value: provider.autoSaveSeconds.toDouble(),
-                                            min: 30,
-                                            max: 180,
-                                            divisions: 8,
-                                            label: provider.dict("settings_autosave_duration_tip").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
-                                            onChangeEnd: (value) {
-                                              provider.saveAll();
-                                              setState(() {
-                                                provider.autoSaveSeconds = value.toInt();
-                                              });
-                                            },
-                                            onChanged: (double value) {},
-                                          ),
+                                        Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 10),
+                                            child: SliderTheme(
+                                              data: SliderThemeData(
+                                                overlayShape: SliderComponentShape.noOverlay,
+                                                trackShape: EdgeToEdgeTrackShape(),
+                                                thumbShape: RoundedThumbShape(enabledThumbRadius: 8.0),
+                                              ),
+                                              child: Slider(
+                                                value: provider.autoSaveSeconds.toDouble(),
+                                                min: 30,
+                                                max: 180,
+                                                divisions: 8,
+                                                label: provider.dict("settings_autosave_duration_tip").replaceAll("(SECONDS)", provider.autoSaveSeconds.toString()),
+                                                onChangeEnd: (value) {
+                                                  setState(() {
+                                                    provider.autoSaveSeconds = value.toInt();
+                                                  });
+                                                  provider.saveAll();
+                                                },
+                                                onChanged: (double value) {},
+                                              ),
+                                            )
                                         ),
                                       ],
                                     ),
                                   ),
-                                )),
+                                )), //autosave card
+                            Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 5),
+                                child: Card(
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  clipBehavior: Clip.hardEdge,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          provider.dict("settings_batches_title"),
+                                          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(provider.dict("settings_batches_desc").replaceAll("(MESSAGES)", provider.messageBatchSize.toString()), style: TextStyle(fontSize: 16)),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 10),
+                                            child: SliderTheme(
+                                              data: SliderThemeData(
+                                                overlayShape: SliderComponentShape.noOverlay,
+                                                trackShape: EdgeToEdgeTrackShape(),
+                                                thumbShape: RoundedThumbShape(enabledThumbRadius: 8.0),
+                                              ),
+                                              child: Slider(
+                                                value: provider.messageBatchSize.toDouble(),
+                                                min: 1,
+                                                max: 50,
+                                                divisions: 10,
+                                                label: provider.dict("settings_batches_tip").replaceAll("(MESSAGES)", provider.messageBatchSize.toString()),
+                                                onChangeEnd: (value) {
+                                                  setState(() {
+                                                    provider.messageBatchSize = value.toInt();
+                                                  });
+                                                  provider.saveAll();
+                                                },
+                                                onChanged: (double value) {},
+                                              ),
+                                            )
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )), //batches card
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 5),
                                 child: Card(
@@ -1290,59 +1346,59 @@ class SettingsPageState extends State<SettingsPage> {
                                       ],
                                     ),
                                   ),
-                                )),
-                            Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 5),
-                                child: Card(
-                                  color: Theme.of(context).colorScheme.onPrimary,
-                                  clipBehavior: Clip.hardEdge,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Container(
-                                              width: scaffoldWidth - 110,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    provider.dict(provider.crowdsource ? "sharing_enabled_title" : "sharing_disabled_title"),
-                                                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                                  ),
-                                                  Text(provider.dict("sharing_title"), style: TextStyle(fontSize: 16)),
-                                                ],
-                                              ),
-                                            ),
-                                            Switch(
-                                              thumbIcon: shareicon,
-                                              value: provider.crowdsource,
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  provider.crowdsource = value;
-                                                });
-                                                provider.saveAll();
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        provider.crowdsource
-                                            ? Container()
-                                            : Padding(
-                                                padding: EdgeInsets.only(top: 10),
-                                                child: Text(provider.dict("sharing_disabled_desc"), style: TextStyle(fontSize: 16)),
-                                              ),
-                                      ],
-                                    ),
-                                  ),
-                                )),
+                                )), //language
+                            // Padding(
+                            //     padding: EdgeInsets.symmetric(horizontal: 5),
+                            //     child: Card(
+                            //       color: Theme.of(context).colorScheme.onPrimary,
+                            //       clipBehavior: Clip.hardEdge,
+                            //       shape: RoundedRectangleBorder(
+                            //         borderRadius: BorderRadius.circular(10),
+                            //       ),
+                            //       child: Padding(
+                            //         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                            //         child: Column(
+                            //           mainAxisAlignment: MainAxisAlignment.start,
+                            //           crossAxisAlignment: CrossAxisAlignment.start,
+                            //           children: [
+                            //             Row(
+                            //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            //               children: [
+                            //                 Container(
+                            //                   width: scaffoldWidth - 110,
+                            //                   child: Column(
+                            //                     crossAxisAlignment: CrossAxisAlignment.start,
+                            //                     children: [
+                            //                       Text(
+                            //                         provider.dict(provider.crowdsource ? "sharing_enabled_title" : "sharing_disabled_title"),
+                            //                         style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                            //                       ),
+                            //                       Text(provider.dict("sharing_title"), style: TextStyle(fontSize: 16)),
+                            //                     ],
+                            //                   ),
+                            //                 ),
+                            //                 Switch(
+                            //                   thumbIcon: shareicon,
+                            //                   value: provider.crowdsource,
+                            //                   onChanged: (value) {
+                            //                     setState(() {
+                            //                       provider.crowdsource = value;
+                            //                     });
+                            //                     provider.saveAll();
+                            //                   },
+                            //                 ),
+                            //               ],
+                            //             ),
+                            //             provider.crowdsource
+                            //                 ? Container()
+                            //                 : Padding(
+                            //                     padding: EdgeInsets.only(top: 10),
+                            //                     child: Text(provider.dict("sharing_disabled_desc"), style: TextStyle(fontSize: 16)),
+                            //                   ),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     )), //crowdsourcing
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 5),
                               child: Card(
@@ -1409,7 +1465,7 @@ class SettingsPageState extends State<SettingsPage> {
                                   ],
                                 ),
                               ),
-                            ),
+                            ), //deveoper contact
                             Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 5),
                                 child: Card(
@@ -1463,7 +1519,7 @@ class SettingsPageState extends State<SettingsPage> {
                                       ),
                                     ),
                                   ),
-                                ))
+                                )) //source code
                           ],
                         ),
                       ),
