@@ -90,5 +90,11 @@
   "constructing_graph": "Konstrukcja grafu",
   "constructed_graph": "Graf skonstruowany",
   "restart_tdlib_error_title": "Restartowanie aplikacji",
-  "restart_tdlib_error_desc": "Błąd podczas inicjalizacji TDLib: zajęło to zbyt dużo czasu"
+  "restart_tdlib_error_desc": "Błąd podczas inicjalizacji TDLib: zajęło to zbyt dużo czasu",
+  "notification_desc": "Ta powiadomienie utrzymuje aplikację w tle :)",
+  "repo_title": "Kod źródłowy",
+  "repo_desc": "Repozytorium aplikacji na GitHubie",
+  "settings_batches_title": "Ilość żądań",
+  "settings_batches_desc": "Żądaj (MESSAGES) wiadomości jednocześnie\nWięcej = szybciej, mniej = płynniej",
+  "settings_batches_tip": "(MESSAGES)"
 }
