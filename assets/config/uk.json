@@ -95,5 +95,7 @@
   "repo_desc": "Репозиторій додатку на GitHub",
   "settings_batches_title": "Завантаження повідомлень",
   "settings_batches_desc": "Запитувати (MESSAGES) повідомлень за раз\nБільше = ефективніше, меньше = плавніше",
-  "settings_batches_tip" : "(MESSAGES)"
+  "settings_batches_tip" : "(MESSAGES)",
+  "export_data_title": "Експортувати",
+  "export_data_desc": "Оберіть бажаний формат для експорту"
 }

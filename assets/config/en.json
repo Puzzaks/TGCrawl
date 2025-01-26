@@ -96,5 +96,7 @@
   "repo_desc": "App's GitHub repository",
   "settings_batches_title": "Request amount",
   "settings_batches_desc": "Request (MESSAGES) messages at once\nMore = faster, less = smoother",
-  "settings_batches_tip" : "(MESSAGES)"
+  "settings_batches_tip" : "(MESSAGES)",
+  "export_data_title": "Export",
+  "export_data_desc": "Select your preferred export format"
 }
