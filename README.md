@@ -19,7 +19,7 @@ This app is made with crowdsourcing in mind. This means that after we finish our
 ### Indexing
 This app helps you analyze what connections channels have. This is possible due to the continuous process of analyzing messages and resolving connections on reposts.
 When you index a channel, the app reads up to 50 messages from the channel, starting at the latest message, and checks if between those messages there is a repost of any channel. If the repost is found, then the app checks if it "knows" that channel (i.e. if this is the first repost from this channel among all indexed channels), if not - it gets info about the channel and its icon, if yes - increments amount of reposts for the connection.
-In the end, it results in a list of connections that this channel has against all other channels, and you can then go and index another channel to get connections of the connection and so on.
+In the end, it results in a list of connections that this channel has against all other channels, and you can then go and index another channel to get connections of the connection and so on. User can download indexed channel data.
 
 ### Relations map
 After indexing, the app creates a map of the indexed channels. If you have one channel indexed, it will look like a central node with connections radiating from it. 
