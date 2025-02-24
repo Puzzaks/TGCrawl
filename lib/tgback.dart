@@ -6,9 +6,11 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pretty_json/pretty_json.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:rxdart/rxdart.dart';
@@ -101,6 +103,8 @@ class tgProvider with ChangeNotifier {
 
   bool isTablet = false;
 
+  bool isFileSaved = false;
+  bool isFileRequested = false;
 
   void init() async {
     if (Platform.isAndroid) {
@@ -196,9 +200,26 @@ class tgProvider with ChangeNotifier {
         notifyListeners();
   }
 
+  saveJSON(name, data) async {
+    notifyListeners();
+    if (!await FlutterFileDialog.isPickDirectorySupported()) {
+      throw Exception("Picking directory not supported");
+    }
+    final pickedDirectory = await FlutterFileDialog.pickDirectory();
+    if (pickedDirectory != null) {
+      await FlutterFileDialog.saveFileToDirectory(
+        directory: pickedDirectory,
+        data: Uint8List.fromList(utf8.encode(prettyJson(data, indent: 2))),
+        mimeType: "application/json",
+        fileName: "$name.json",
+        replace: true,
+      );
+    }
+  }
+
 
   getConfigOnline() async {
-    var remoteAssets = "https://raw.githubusercontent.com/Puzzaks/tgcrawl/dev/assets/config";
+    var remoteAssets = "https://raw.githubusercontent.com/Puzzaks/tgcrawl/master/assets/config";
     status = "Loading configuration...";
     notifyListeners();
     final intros = await http.get(

@@ -1771,6 +1771,7 @@ class IndexPageState extends State<IndexPage> {
             SizedBox(width: 15,),
             FloatingActionButton(
               onPressed: () async {
+                provider.isFileSaved = false;
                 showDialog<String>(
                   context: context,
                   builder: (BuildContext context) => Dialog(
@@ -1807,7 +1808,70 @@ class IndexPageState extends State<IndexPage> {
                               ),
                               child: InkWell(
                                 onTap: () async {
-
+                                  provider.saveJSON(provider.currentChannel["username"], provider.currentChannel);
+                                  Navigator.pop(context);
+                                  showDialog<String>(
+                                    context: context,
+                                    builder: (BuildContext context) => Dialog(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: EdgeInsets.all(15),
+                                              child: Text(
+                                                provider.dict("exported_data_title"),
+                                                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  left:15,
+                                                  right:15,
+                                                  bottom: 15
+                                              ),
+                                              child: Text(
+                                                provider.dict("exported_data_desc"),
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(horizontal: 5),
+                                              child: Card(
+                                                color: Theme.of(context).colorScheme.errorContainer,
+                                                clipBehavior: Clip.hardEdge,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Padding(
+                                                    padding: EdgeInsets.all(15),
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Text(
+                                                          provider.dict("close"),
+                                                          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                                        ),
+                                                        Icon(Icons.cancel_outlined)
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 5,
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
                                 },
                                 child: Padding(
                                   padding: EdgeInsets.all(15),
@@ -1825,34 +1889,33 @@ class IndexPageState extends State<IndexPage> {
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 5),
-                            child: Card(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                              clipBehavior: Clip.hardEdge,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: InkWell(
-                                onTap: () async {
-
-                                },
-                                child: Padding(
-                                  padding: EdgeInsets.all(15),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "CSV",
-                                        style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                                      ),
-                                      Icon(Icons.source_rounded)
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Padding(
+                          //   padding: EdgeInsets.symmetric(horizontal: 5),
+                          //   child: Card(
+                          //     color: Theme.of(context).colorScheme.onPrimary,
+                          //     clipBehavior: Clip.hardEdge,
+                          //     shape: RoundedRectangleBorder(
+                          //       borderRadius: BorderRadius.circular(10),
+                          //     ),
+                          //     child: InkWell(
+                          //       onTap: () async {
+                          //       },
+                          //       child: Padding(
+                          //         padding: EdgeInsets.all(15),
+                          //         child: Row(
+                          //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          //           children: [
+                          //             Text(
+                          //               "CSV",
+                          //               style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                          //             ),
+                          //             Icon(Icons.source_rounded)
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 5),
                             child: Card(
@@ -1881,6 +1944,9 @@ class IndexPageState extends State<IndexPage> {
                               ),
                             ),
                           ),
+                          SizedBox(
+                            height: 5,
+                          )
                         ],
                       ),
                     ),
