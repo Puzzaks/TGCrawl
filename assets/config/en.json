@@ -98,5 +98,10 @@
   "settings_batches_desc": "Request (MESSAGES) messages at once\nMore = faster, less = smoother",
   "settings_batches_tip" : "(MESSAGES)",
   "export_data_title": "Export",
-  "export_data_desc": "Select your preferred export format"
+  "export_data_desc": "Select your preferred export format",
+  "exporting_data_title": "Exporting",
+  "exporting_data_desc": "Exporting now, hold on please. We'll save the file in your Downloads folder on device.",
+  "exported_data_title": "Exported!",
+  "exported_data_desc": "Exporting done, you can open the file now. It is in your Downloads folder on device.",
+  "close": "Close"
 }

@@ -97,5 +97,10 @@
   "settings_batches_desc": "Запитувати (MESSAGES) повідомлень за раз\nБільше = ефективніше, меньше = плавніше",
   "settings_batches_tip" : "(MESSAGES)",
   "export_data_title": "Експортувати",
-  "export_data_desc": "Оберіть бажаний формат для експорту"
+  "export_data_desc": "Оберіть бажаний формат для експорту",
+  "exporting_data_title": "Експортуємо",
+  "exporting_data_desc": "Відбувається запис файлу. Після завершення дані будуть в папці Downloads на цьому девайсі.",
+  "exported_data_title": "Експортовано!",
+  "exported_data_desc": "Файл збережено. Він знаходиться в папці Downloads цього девайсу.",
+  "close": "Закрити"
 }
