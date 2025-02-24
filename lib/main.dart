@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tgcrawl/tgback.dart';
@@ -782,7 +781,7 @@ class HomePageState extends State<HomePage> {
                                         "${provider.userData["first_name"].toString()}${provider.userData["last_name"].toString() == "" ? "" : " "}${provider.userData["last_name"].toString()}",
                                         style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                       ),
-                                      Text(provider.userData.containsKey("usernames") ? "@${provider.userData["usernames"]["editable_username"]}" : provider.dict("no_username"), style: TextStyle(fontSize: 16)),
+                                      Text(!(provider.userData["usernames"] == null) ? "@${provider.userData["usernames"]["editable_username"]}" : provider.dict("no_username"), style: TextStyle(fontSize: 16)),
                                     ],
                                   ),
                                 )
