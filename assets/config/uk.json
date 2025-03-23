@@ -23,7 +23,7 @@
 
   "login_title": "Увійти",
   "login_desc": "Тепер будь ласка авторизуйтесь з Вашим акаунтом Телеграм для того щоб додаток міг сканувати канали. Пам'ятайте, додаток не читатиме Ваші повідомлення і Ваші дані не залишать Ваш пристрій.",
-  "enter_phone": "Введіть номер телефону в міжнародному форматі",
+  "enter_phone": "Введіть номер телефону",
   "code_title": "Введіть код",
   "code_desc": "Будь ласка, введіть код, надісланий вам у Телеграм.",
   "password_title": "Введіть пароль",
@@ -102,5 +102,13 @@
   "exporting_data_desc": "Відбувається запис файлу. Після завершення дані будуть в папці Downloads на цьому девайсі.",
   "exported_data_title": "Експортовано!",
   "exported_data_desc": "Файл збережено. Він знаходиться в папці Downloads цього девайсу.",
-  "close": "Закрити"
+  "close": "Закрити",
+
+  "enter_number_empty": "Будь ласка, введіть Ваш номер в міжнародному форматі",
+  "enter_number_invalid_single": "(INFO) не є цифрою.",
+  "enter_number_invalid_multiple": "(INFO) are not valid digits.",
+  "enter_number_invalid_countrycode": "Country code is invalid.",
+  "enter_number_invalid_too_long": "The number is too long.",
+  "enter_number_invalid_too_short": "The number is too short.",
+  "enter_number_valid": "Ready to log in!"
 }

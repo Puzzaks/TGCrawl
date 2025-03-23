@@ -23,7 +23,7 @@
 
   "login_title": "Log in",
   "login_desc": "Now you have to log in with your Telegram account for app to be able to read Telegram channels. Remember, this will only be used for scanning channels, we won't have access to your messages and your account won't leave this app.",
-  "enter_phone": "Enter your phone number in international number format",
+  "enter_phone": "Enter your phone number",
   "code_title": "Enter the code",
   "code_desc": "Please, enter the code, sent to you by Telegram.",
   "password_title": "Enter your password",
@@ -111,5 +111,12 @@
   "enter_number_invalid_countrycode": "Country code is invalid.",
   "enter_number_invalid_too_long": "The number is too long.",
   "enter_number_invalid_too_short": "The number is too short.",
-  "enter_number_valid": "Ready to log in!"
+  "enter_number_valid": "Ready to log in!",
+
+  "enter_code_empty": "Please enter code, sent to you by Telegram.",
+  "enter_code_invalid_single": "(INFO) is not a valid digit.",
+  "enter_code_invalid_wtf": "Code you entered contains a non-digit.",
+  "enter_code_invalid_too_long": "The number is too long.",
+  "enter_code_invalid_too_short": "The number is too short.",
+  "enter_code_valid": "Ready to log in!"
 }
