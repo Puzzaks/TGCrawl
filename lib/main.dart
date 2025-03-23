@@ -55,7 +55,7 @@ class HomeScreen extends StatelessWidget {
                   provider.localWidth = scaffoldWidth;
                   provider.localHeight = scaffoldHeight;
                   provider.isTablet = MediaQuery.of(context).size.width > 600;
-                  print("TABLET: ${provider.isTablet}");
+                  provider.setOverlays(Theme.of(context).colorScheme.background);
 
                   return provider.langReady
                       ? AnimatedCrossFade(
@@ -882,7 +882,7 @@ class HomePageState extends State<HomePage> {
                                             height: 10,
                                           ),
                                           LinearProgressIndicator(
-                                            value: provider.graphDone.length == 0 ? 1 : provider.graphDone.length / provider.graphTotal.length,
+                                            value: provider.graphDone.length == 0 || provider.graphTotal.length == 0? 0 : provider.graphDone.length / provider.graphTotal.length,
                                             borderRadius: const BorderRadius.all(Radius.circular(3)),
                                           )
                                         ],
@@ -1670,7 +1670,7 @@ class NewIndexPageState extends State<NewIndexPage> {
                                       ? Container()
                                       : ClipRRect(
                                           borderRadius: BorderRadius.circular(10.0),
-                                          child: provider.candidateChannel["picfile"] == "NOPIC"
+                                          child: provider.candidateChannel["picfile"] == "NOPIC" || provider.candidateChannel["picfile"] == null
                                               ? Container(
                                                   color: Theme.of(context).colorScheme.primaryContainer,
                                                   width: 60,
@@ -3340,6 +3340,10 @@ class loginPhoneStageState extends State<loginPhoneStage> {
                                   style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                 ),
                                 Text(provider.dict("login_desc"), style: TextStyle(fontSize: 16)),
+                                Text(
+                                    provider.dict(provider.numberValidation["info"]).replaceAll("(INFO)", provider.numberValidation["error"]),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(top: 15),
                                   child: TextField(
@@ -3351,6 +3355,9 @@ class loginPhoneStageState extends State<loginPhoneStage> {
                                     expands: false,
                                     minLines: null,
                                     maxLines: null,
+                                    onChanged: (number){
+                                      provider.validateNumber(number.toString());
+                                    },
                                     decoration: InputDecoration(
                                       contentPadding: const EdgeInsets.only(top: 15, bottom: 0, left: 10, right: 10),
                                       prefixIcon: Icon(Icons.dialpad_rounded),
@@ -3358,24 +3365,53 @@ class loginPhoneStageState extends State<loginPhoneStage> {
                                       border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10)), borderSide: BorderSide(color: Colors.grey)),
                                     ),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      Container(
-                        width: scaffoldWidth,
-                        child: Card(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          clipBehavior: Clip.hardEdge,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      AnimatedCrossFade(
+                        alignment: Alignment.center,
+                        duration: Duration(milliseconds: 500),
+                        firstChild: Container(
+                          width: scaffoldWidth,
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            clipBehavior: Clip.hardEdge,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                if(provider.numberValidation["valid"]){
+                                  provider.doNumberLogin();
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.all(15),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      provider.dict("next"),
+                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                    ),
+                                    Icon(Icons.navigate_next_rounded)
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              provider.doNumberLogin();
-                            },
+                        ),
+                        secondChild: Container(
+                          width: scaffoldWidth,
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary.withAlpha(20),
+                            clipBehavior: Clip.hardEdge,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: Padding(
                               padding: EdgeInsets.all(15),
                               child: Row(
@@ -3391,6 +3427,7 @@ class loginPhoneStageState extends State<loginPhoneStage> {
                             ),
                           ),
                         ),
+                        crossFadeState: provider.numberValidation["valid"] ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                       ),
                       SizedBox(
                         height: 5,
@@ -3471,6 +3508,10 @@ class loginCodeStageState extends State<loginCodeStage> {
                                   style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                                 ),
                                 Text(provider.dict("code_desc"), style: TextStyle(fontSize: 16)),
+                                Text(
+                                    provider.dict(provider.codeValidation["info"]).replaceAll("(INFO)", provider.codeValidation["error"]),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                                ),
                                 Padding(
                                   padding: const EdgeInsets.only(top: 15),
                                   child: TextField(
@@ -3482,6 +3523,9 @@ class loginCodeStageState extends State<loginCodeStage> {
                                     expands: false,
                                     minLines: null,
                                     maxLines: null,
+                                    onChanged: (code){
+                                      provider.validateCode(code.toString());
+                                    },
                                     decoration: InputDecoration(
                                       contentPadding: const EdgeInsets.only(top: 15, bottom: 0, left: 10, right: 10),
                                       prefixIcon: Icon(Icons.pin_rounded),
@@ -3495,18 +3539,47 @@ class loginCodeStageState extends State<loginCodeStage> {
                           ),
                         ),
                       ),
-                      Container(
-                        width: scaffoldWidth,
-                        child: Card(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          clipBehavior: Clip.hardEdge,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      AnimatedCrossFade(
+                        alignment: Alignment.center,
+                        duration: Duration(milliseconds: 500),
+                        firstChild: Container(
+                          width: scaffoldWidth,
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            clipBehavior: Clip.hardEdge,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                if(provider.codeValidation["valid"]){
+                                  provider.doCodeLogin();
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.all(15),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      provider.dict("next"),
+                                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                                    ),
+                                    Icon(Icons.navigate_next_rounded)
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          child: InkWell(
-                            onTap: () {
-                              provider.doCodeLogin();
-                            },
+                        ),
+                        secondChild: Container(
+                          width: scaffoldWidth,
+                          child: Card(
+                            color: Theme.of(context).colorScheme.onPrimary.withAlpha(20),
+                            clipBehavior: Clip.hardEdge,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             child: Padding(
                               padding: EdgeInsets.all(15),
                               child: Row(
@@ -3522,6 +3595,7 @@ class loginCodeStageState extends State<loginCodeStage> {
                             ),
                           ),
                         ),
+                        crossFadeState: provider.codeValidation["valid"] ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                       ),
                       SizedBox(
                         height: 5,

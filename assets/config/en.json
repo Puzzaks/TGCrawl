@@ -30,7 +30,7 @@
   "password_desc": "Please, enter your password to complete login. Remember, NONE of your data (credentials, messages, etc.) won't leave this device. Your privacy and safety is important for us.",
 
   "user_loading_title": "One moment...",
-  "user_loading_desc": "Validating your login and starting app engine...",
+  "user_loading_desc": "Validating your login and starting app engine...\nThe bigger your account, the more time TDLib needs to load data. Please wait or restart app.",
   "no_username": "No username",
   "sharing_disabled_title": "Sharing disabled",
   "sharing_disabled_desc": "Please note that analyzed channel data sharing is disabled. This project depends on data gathered by users, so we'd like to ask you to enable sharing so we can make map of Telegram channels together.",
@@ -103,5 +103,20 @@
   "exporting_data_desc": "Exporting now, hold on please. We'll save the file in your Downloads folder on device.",
   "exported_data_title": "Exported!",
   "exported_data_desc": "Exporting done, you can open the file now. It is in your Downloads folder on device.",
-  "close": "Close"
+  "close": "Close",
+
+  "enter_number_empty": "Please enter your number in international format",
+  "enter_number_invalid_single": "(INFO) is not a valid digit.",
+  "enter_number_invalid_multiple": "(INFO) are not valid digits.",
+  "enter_number_invalid_countrycode": "Country code is invalid.",
+  "enter_number_invalid_too_long": "The number is too long.",
+  "enter_number_invalid_too_short": "The number is too short.",
+  "enter_number_valid": "Ready to log in!",
+
+  "enter_code_empty": "Please enter code, sent to you by Telegram.",
+  "enter_code_invalid_single": "(INFO) is not a valid digit.",
+  "enter_code_invalid_wtf": "Code you entered contains a non-digit.",
+  "enter_code_invalid_too_long": "The number is too long.",
+  "enter_code_invalid_too_short": "The number is too short.",
+  "enter_code_valid": "Ready to log in!"
 }
