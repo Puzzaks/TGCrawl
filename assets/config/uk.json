@@ -29,7 +29,7 @@
   "password_title": "Введіть пароль",
   "password_desc": "Будь ласка, введіть Ваш пароль для завершення авторизації. Пам'ятайте, жодні Ваші дані не будуть надіслані нікуди, вони завжди залишаються на цьому пристрої. Ваша безпека дуже важлива для нас.",
   "user_loading_title": "Секунду...",
-  "user_loading_desc": "Первіряємо авторизацію та запускаємо рушій додатку...",
+  "user_loading_desc": "Первіряємо авторизацію та запускаємо рушій додатку...\nЧим більше в Вас чатів, повідомлень та каналів, тим довше це може зайняти. Зачекайте або перезавантажте додаток.",
   "no_username": "Без імені користувача",
   "sharing_disabled_title": "Передача даних вимкнена",
   "sharing_disabled_desc": "Ми не будемо отримувати від Вас даних про індексовані канали. Цей проект існує за рахунок даних, проіндексованих користувачами, тож ми б хотіли попросити Вас увімкнути передачу данних щоб ми могли зробити мапу Телеграм каналів разом.",
@@ -106,9 +106,16 @@
 
   "enter_number_empty": "Будь ласка, введіть Ваш номер в міжнародному форматі",
   "enter_number_invalid_single": "(INFO) не є цифрою.",
-  "enter_number_invalid_multiple": "(INFO) are not valid digits.",
-  "enter_number_invalid_countrycode": "Country code is invalid.",
-  "enter_number_invalid_too_long": "The number is too long.",
-  "enter_number_invalid_too_short": "The number is too short.",
-  "enter_number_valid": "Ready to log in!"
+  "enter_number_invalid_multiple": "(INFO) не є цифрами.",
+  "enter_number_invalid_countrycode": "Такий код країни не існує.",
+  "enter_number_invalid_too_long": "Занадто довгий номер.",
+  "enter_number_invalid_too_short": "Занадто короткий номер.",
+  "enter_number_valid": "Можна входити!",
+
+  "enter_code_empty": "Будь ласка, введіть код який Вам надіслав Telegram.",
+  "enter_code_invalid_single": "(INFO) не є цифрою.",
+  "enter_code_invalid_wtf": "Код містить зайві символи.",
+  "enter_code_invalid_too_long": "Код занадто довгий.",
+  "enter_code_invalid_too_short": "Код занадто короткий.",
+  "enter_code_valid": "Можна входити!"
 }

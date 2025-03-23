@@ -30,7 +30,7 @@
   "password_desc": "Please, enter your password to complete login. Remember, NONE of your data (credentials, messages, etc.) won't leave this device. Your privacy and safety is important for us.",
 
   "user_loading_title": "One moment...",
-  "user_loading_desc": "Validating your login and starting app engine...",
+  "user_loading_desc": "Validating your login and starting app engine...\nThe bigger your account, the more time TDLib needs to load data. Please wait or restart app.",
   "no_username": "No username",
   "sharing_disabled_title": "Sharing disabled",
   "sharing_disabled_desc": "Please note that analyzed channel data sharing is disabled. This project depends on data gathered by users, so we'd like to ask you to enable sharing so we can make map of Telegram channels together.",
