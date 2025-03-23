@@ -2,7 +2,7 @@ name: tgcrawl
 description: "Project for Indexing of Telegram Channel Connections"
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 0.0.3+3
+version: 0.0.4+4
 
 environment:
   sdk: '>=2.19.3 <3.0.0'
