@@ -39,5 +39,5 @@ By enabling analysis sharing you automatically remove all ads from the app. For 
 
 ### Security
 We take security very seriously. There are no jokes, as this app requires your Telegram account to even function. While we can't guarantee that your account won't be banned for using this app, it is true that that did not happen to anyone yet. 
-Your Telegram channel is always local, we are not receiving and the app is not sending any of your data anywhere, EXCEPT for what Telegram Library (TDLib) does. We are not responsible for TDLibs data handling, but the app itself does not send or save any of your login credentials, session keys, or any of your information.
+Your Telegram login is always local, we are not receiving any of your credentials and the app is not sending any of your data anywhere, EXCEPT for what Telegram Library (TDLib) does. We are not responsible for TDLibs data handling, but the app itself does not send or save any of your login credentials, session keys, or any of your information.
 Crowdsourcing is always anonymous, if you are opting in to share analyzed data, the only info app that will be sending is the analysis results for the channels you have indexed and known channels that were discovered. No other data will be sent. PERIOD.
